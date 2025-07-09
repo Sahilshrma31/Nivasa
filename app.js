@@ -3,6 +3,9 @@ const app=express();
 const mongoose=require("mongoose");
 const Listing=require("./models/listing.js");
 const path=require("path");
+const methodOverride = require('method-override');
+const ejsMate=require("ejs-mate"); //for using repetitive layouts
+
 
 const MONGO_URL="mongodb://127.0.0.1:27017/Nivasa"
 
@@ -16,18 +19,27 @@ main()
 
 async function main() {
     await mongoose.connect(MONGO_URL);
-    
+
 }
 
 app.set("view engine","ejs");
 app.set("views",path.join(__dirname,"views"));
 app.use(express.urlencoded({extended:true}));//sara data request ke andr parse ho paye
-
+app.use(methodOverride("_method"));
+app.engine("ejs",ejsMate);
+app.use(express.static(path.join(__dirname,"/public")));
 //index route
 app.get("/listings",async(req,res)=>{
     const allListings=await Listing.find({});
     res.render("listings/index.ejs",{allListings});
+   
+
 });
+
+//new route
+app.get("/listings/new",async(req,res)=>{
+    res.render("listings/new.ejs")
+})
 
 //show route
 app.get("/listings/:id",async(req,res)=>{
@@ -35,6 +47,31 @@ app.get("/listings/:id",async(req,res)=>{
    const listing=await Listing.findById(id);
    res.render("listings/show.ejs",{listing});
 })
+
+//create route
+
+// Handles POST request to /listings (form submission route)
+app.post("/listings", async (req, res) => {                     // Handle POST request to create new listing
+    const newListing = new Listing(req.body.listing);           // Create a new listing from form data
+    await newListing.save();                                    // Save the new listing to the database
+    res.redirect("/listings");                                  // Redirect to the listings page after saving
+});
+
+
+//edit route
+app.get("/listings/:id/edit",async (req,res)=>{
+    let {id}=req.params;
+    const listing=await Listing.findById(id);
+    res.render("listings/edit.ejs",{listing});
+})
+
+//update route
+app.put("/listings/:id", async (req, res) => {                  // Handles PUT request to update a listing with a specific ID
+    let { id } = req.params;                                     // Extracts 'id' from URL parameters
+    await Listing.findByIdAndUpdate(id, { ...req.body.listing }); // Updates the listing in DB with new form data using spread operator
+    res.redirect(`/listings/${id}`);                                   // Redirects user to listings page after update
+});
+
 
 app.get("/testListing",async(req,res)=>{
     let sampleListing=new Listing({
@@ -49,9 +86,16 @@ app.get("/testListing",async(req,res)=>{
     res.send("successfull testing");
 });
 
+//delete route
+app.delete("/listings/:id", async (req, res) => {
+    await Listing.findByIdAndDelete(req.params.id);
+    res.redirect("/listings");
+  });
+  
+
 
 app.get("/",(req,res)=>{
-    res.send("hi am root")
+    res.send("welcome to nivasa");
 })
 
 app.listen(8080,()=>{

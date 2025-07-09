@@ -7,15 +7,11 @@ const listingSchema=new Schema({
         required:true,
     },
     description:String,
-    image:{
-        type:{
-            filename:String,
-            url: String
-        },
-        default:"https://unsplash.com/photos/aerial-photography-of-green-mountain-beside-body-of-water-under-white-sky-prSogOoFmkw",//jab dee hi nahi image
-        set:(v)=>v==="" ? "https://unsplash.com/photos/aerial-photography-of-green-mountain-beside-body-of-water-under-white-sky-prSogOoFmkw":v,//jab image link empty ho 
-        
-    },
+    image: {
+      url: String,
+      filename: String,
+  },
+      
     price:Number,
     location:String,
     country:String,
