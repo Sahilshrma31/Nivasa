@@ -2,8 +2,6 @@
 <body>
     <h3>All listings</h3>
 
-  
-
     <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 g-4">
         <% for(let listing of allListings){ %>
         <div class="col"> <a href="/listings/<%=listing._id%>" class="listing-link">
@@ -13,7 +11,11 @@
                     <div class="card-body">
                         <p class="card-text">
                             <b><%= listing.title %></b> <br>
-                            &#8377; <%= listing.price.toLocaleString("en-IN") %>/night
+                            &#8377;
+                            <% if (listing.price !== null && listing.price !== undefined) { %>
+                                <%= listing.price.toLocaleString("en-IN") %>
+                            <% } else { %>
+                                N/A <% } %>/night
                         </p>
                     </div>
                 </div>
@@ -21,5 +23,6 @@
         </div>
         <% } %>
     </div>
+</body>
 
    

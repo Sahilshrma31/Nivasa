@@ -12,7 +12,11 @@ const listingSchema=new Schema({
       filename: String,
   },
       
-    price:Number,
+  price: {
+    type: Number,
+    required: true, // <--- ADD THIS
+    min: 0          // <--- Good practice: Price cannot be negative
+},
     location:String,
     country:String,
 });

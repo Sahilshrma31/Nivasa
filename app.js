@@ -71,10 +71,18 @@ app.get("/listings/:id/edit",async (req,res)=>{
 })
 
 //update route
-app.put("/listings/:id", async (req, res) => {                  // Handles PUT request to update a listing with a specific ID
-    let { id } = req.params;                                     // Extracts 'id' from URL parameters
-    await Listing.findByIdAndUpdate(id, { ...req.body.listing }); // Updates the listing in DB with new form data using spread operator
-    res.redirect(`/listings/${id}`);                                   // Redirects user to listings page after update
+app.put("/listings/:id", upload.single('listing[image]'), async (req, res) => {
+    let { id } = req.params;
+
+    // image ka handling (optional): agar user new image upload kare
+    if (req.file) {
+        req.body.listing.image = {
+            url: `/uploads/${req.file.filename}`,
+        };
+    }
+
+    await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+    res.redirect(`/listings/${id}`);
 });
 
 

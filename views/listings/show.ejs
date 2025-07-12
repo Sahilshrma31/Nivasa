@@ -11,7 +11,15 @@
             <div class="card-body">
                 <p class="card-text"><b><%= listing.title %></b></p>
                 <p class="card-text"><%= listing.description %></p>
-                <p class="card-text">₹<%= listing.price.toLocaleString("en-IN") %></p>
+                <p class="card-text">
+                    ₹
+                    <% if (listing.price) { %>
+                        <%= listing.price.toLocaleString("en-IN") %>
+                    <% } else { %>
+                        N/A
+                    <% } %>
+                </p>
+                
                 <p class="card-text"><%= listing.location %></p>
                 <p class="card-text"><%= listing.country %></p>
             </div>
