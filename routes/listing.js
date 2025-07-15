@@ -39,12 +39,28 @@ router.get("/", wrapAsync(async (req, res) => {
     res.render("listings/show.ejs", { listing });
   }));
   
-  // Create
-  router.post("/", validateListing, wrapAsync(async (req, res) => {
-    const newListing = new Listing(req.body.listing);
-    await newListing.save();
-    res.redirect("/listings");
-  }));
+  // Create a new listing
+router.post(
+    "/",
+    upload.single("listing[image]"), // Middleware to handle file upload from form
+    validateListing, // Middleware to validate form data using Joi
+    wrapAsync(async (req, res) => {
+      const listingData = req.body.listing; // Extract listing details from form
+  
+      if (req.file) {
+        // If image was uploaded, attach image data to listing
+        listingData.image = {
+          url: req.file.path, // Local file path (e.g., uploads/xyz123)
+          filename: req.file.filename, // Generated filename
+        };
+      }
+  
+      const newListing = new Listing(listingData); // Create new Listing model
+      await newListing.save(); // Save to MongoDB
+      res.redirect(`/listings/${newListing._id}`); // Redirect to the newly created listing
+    })
+  );
+  
   
   // Edit
   router.get("/:id/edit", wrapAsync(async (req, res) => {
