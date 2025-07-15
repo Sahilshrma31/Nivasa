@@ -121,7 +121,8 @@ app.delete(
 );
 
 //reviews route
-//post request
+
+//post review  request
 app.post("/listings/:id/reviews",
   validatereview, wrapAsync(async (req, res) => { // Review form submit hone par yeh route chalega
   let listing = await Listing.findById(req.params.id); // URL se listing ka ID leke usse DB se dhoond rahe hain
@@ -135,6 +136,20 @@ app.post("/listings/:id/reviews",
 
   res.redirect(`/listings/${listing._id}`); // Response bhej rahe hain (redirect bhi kar sakte ho)
 }));
+
+//delete review route
+// DELETE route to delete a review from a listing
+app.delete("/listings/:id/reviews/:reviewID",  //  Route for deleting a review
+  wrapAsync(async (req, res) => {  // Async wrapper to handle errors
+    let { id, reviewID } = req.params;  //  URL se listing ID aur review ID le rahe hain
+
+    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewID } });  // Listing ke reviews array se review ID hata rahe hain
+
+    await Review.findByIdAndDelete(reviewID);  // Actual review document ko delete kar rahe hain
+
+    res.redirect(`/listings/${id}`);  // Wapas listing page par redirect kar rahe hain
+}));
+
 
 
 // Test route
