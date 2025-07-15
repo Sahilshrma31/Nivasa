@@ -7,7 +7,8 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError");
-const listingSchema=require("./schema.js")
+const {listingSchema,reviewSchema}=require("./schema.js")
+const Review=require("./models/review.js");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/Nivasa";
 
@@ -31,6 +32,16 @@ const validateListing=(req,res,next)=>{
     }else{
         next();
         }
+}
+
+const validatereview=(req,res,next)=>{
+  let {error}=reviewSchema.validate(req.body);
+  if(error){
+      let errMsg=error.details.map((el)=>el.message).join(",");
+      throw new ExpressError(400,error);
+  }else{
+      next();
+      }
 }
 
 app.set("view engine", "ejs");
@@ -108,6 +119,23 @@ app.delete(
     res.redirect("/listings");
   })
 );
+
+//reviews route
+//post request
+app.post("/listings/:id/reviews",
+  validatereview, wrapAsync(async (req, res) => { // Review form submit hone par yeh route chalega
+  let listing = await Listing.findById(req.params.id); // URL se listing ka ID leke usse DB se dhoond rahe hain
+  let newReview = new Review(req.body.review); // Form se jo review aaya uska ek naya object bana rahe hain
+  listing.reviews.push(newReview);// Listing ke reviews array mein naya review daal rahe hain (reference)
+
+  await newReview.save(); // Review ko database mein save kar rahe hain
+  await listing.save(); // Listing mein jo review add kiya tha, usko bhi DB mein update kar rahe hain
+
+  console.log("new review saved"); 
+
+  res.redirect(`/listings/${listing._id}`); // Response bhej rahe hain (redirect bhi kar sakte ho)
+}));
+
 
 // Test route
 app.get(
