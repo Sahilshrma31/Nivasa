@@ -1,5 +1,6 @@
 const mongoose=require("mongoose");
 const Schema=mongoose.Schema;
+const Review=require("./review.js");
 
 
 const listingSchema=new Schema({
@@ -27,6 +28,14 @@ const listingSchema=new Schema({
     ]
 
 });
+
+listingSchema.post("findOneAndDelete", async (listing) => { // Post middleware after a listing is deleted
+    if (listing) { // Only run if a listing was actually found and deleted
+      await Review.deleteMany({ _id: { $in: listing.reviews } }); // Delete all reviews whose _id is in the deleted listing's reviews array
+    }
+  });
+  
+
 
 const Listing=mongoose.model("Listing",listingSchema);
 module.exports=Listing;
