@@ -7,7 +7,9 @@ const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const reviews=require("./routes/review.js");
-const listings=require("./routes/listing.js")
+const session=require("express-session");
+const listings=require("./routes/listing.js");
+const flash=require("connect-flash");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/Nivasa";
 
@@ -34,11 +36,35 @@ app.engine("ejs", ejsMate);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "/public")));
 
+
+const sessionoptions={
+    secret:"mysupersecretcode",
+    resave:false,
+    saveUninitialized: true,
+      cookie:{
+      expires:Date.now()+7*24*60*60*1000,
+      maxAge:7*24*60*60*1000,
+      httpOnly:true,
+    }
+};
+
+// Home route
+app.get("/", (req, res) => {
+  res.send("welcome to nivasa");
+});
+
+app.use(session(sessionoptions));
+app.use(flash());//yeh routes ke pehle hona chaiye
+
+app.use((req, res, next) => {
+  res.locals.success = req.flash("success");
+  res.locals.error = req.flash("error");  // ✅ Add this line
+  next();
+});
+
+
 app.use("/listings",listings);
 app.use("/listings/:id/reviews",reviews);
-
-
-
 
 // Test route
 app.get(
@@ -57,10 +83,7 @@ app.get(
   })
 );
 
-// Home route
-app.get("/", (req, res) => {
-  res.send("welcome to nivasa");
-});
+
 
 // Catch-all route
 // app.all("*", (req, res, next) => {
