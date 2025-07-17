@@ -42,7 +42,7 @@ router.post("/login",
     }),
     async (req, res) => {
         req.flash("success", "Welcome back to Nivasa!");
-        const redirectUrl = res.locals.redirect || "/listings";  // ✅ fixed here
+        const redirectUrl = res.locals.redirect || "/listings";  // fixed here
         res.redirect(redirectUrl);
     }
 );
