@@ -1,4 +1,64 @@
 const sampleListings = [ //created sample data in the form of the array
+  {
+    title: "Serene Valley View in Chamba",
+    description: "Escape to the tranquil Chamba valley. This hotel offers breathtaking views of the Himalayas and the Ravi river, providing a perfect blend of comfort and nature.",
+    image: {
+        filename: "listingimage",
+        url: "https://images.unsplash.com/photo-1669312716490-5766f391d69b?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    price: 2800,
+    location: "Chamba",
+    country: "India",
+     owner: "64b0ab1a84ae4b0e24cde1a1"
+  },
+  {
+    title: "Colonial Heritage Hotel in Manali",
+    description: "Stay in a beautifully restored heritage property just a short walk from the famous Mall Road. Enjoy the colonial charm and stunning views of the city.",
+    image: {
+        filename: "listingimage",
+        url: "https://images.unsplash.com/photo-1618944740559-1a017f1ff83f?q=80&w=1752&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    price: 3500,
+    location: "Manali",
+    country: "India",
+     owner: "64b0ab1a84ae4b0e24cde1a1"
+  },
+  {
+    title: "Rustic Log Cabin in Montana",
+    description:
+      "Unplug and unwind in this cozy log cabin surrounded by the natural beauty of Montana.",
+    image: {
+      filename: "listingimage",
+      url: "https://images.unsplash.com/photo-1586375300773-8384e3e4916f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fGxvZGdlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+    },
+    price: 1100,
+    location: "Montana",
+    country: "United States",
+  },
+  {
+    title: "Rustic Cabin by the Lake",
+    description:
+      "Spend your days fishing and kayaking on the serene lake. This cozy cabin is perfect for outdoor enthusiasts.",
+    image: {
+      filename: "listingimage",
+      url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fG1vdW50YWlufGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+    },
+    price: 900,
+    location: "Lake Tahoe",
+    country: "United States",
+  },
+  {
+    title: "Tropical Villa in Phuket",
+    description:
+      "Escape to a tropical paradise in this luxurious villa with a private infinity pool in Phuket.",
+    image: {
+      filename: "listingimage",
+      url: "https://images.unsplash.com/photo-1470165301023-58dab8118cc9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fGxvZGdlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
+    },
+    price: 3000,
+    location: "Phuket",
+    country: "Thailand",
+  },
     {
       title: "Cozy Beachfront Cottage",
       description:
@@ -71,18 +131,7 @@ const sampleListings = [ //created sample data in the form of the array
       location: "Cancun",
       country: "Mexico",
     },
-    {
-      title: "Rustic Cabin by the Lake",
-      description:
-        "Spend your days fishing and kayaking on the serene lake. This cozy cabin is perfect for outdoor enthusiasts.",
-      image: {
-        filename: "listingimage",
-        url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fG1vdW50YWlufGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
-      },
-      price: 900,
-      location: "Lake Tahoe",
-      country: "United States",
-    },
+   
     {
       title: "Luxury Penthouse with City Views",
       description:
@@ -203,18 +252,7 @@ const sampleListings = [ //created sample data in the form of the array
       location: "Miami",
       country: "United States",
     },
-    {
-      title: "Tropical Villa in Phuket",
-      description:
-        "Escape to a tropical paradise in this luxurious villa with a private infinity pool in Phuket.",
-      image: {
-        filename: "listingimage",
-        url: "https://images.unsplash.com/photo-1470165301023-58dab8118cc9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fGxvZGdlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
-      },
-      price: 3000,
-      location: "Phuket",
-      country: "Thailand",
-    },
+  
     {
       title: "Historic Castle in Scotland",
       description:
@@ -239,18 +277,7 @@ const sampleListings = [ //created sample data in the form of the array
       location: "Dubai",
       country: "United Arab Emirates",
     },
-    {
-      title: "Rustic Log Cabin in Montana",
-      description:
-        "Unplug and unwind in this cozy log cabin surrounded by the natural beauty of Montana.",
-      image: {
-        filename: "listingimage",
-        url: "https://images.unsplash.com/photo-1586375300773-8384e3e4916f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTN8fGxvZGdlfGVufDB8fDB8fHww&auto=format&fit=crop&w=800&q=60",
-      },
-      price: 1100,
-      location: "Montana",
-      country: "United States",
-    },
+
     {
       title: "Beachfront Villa in Greece",
       description:
@@ -310,6 +337,7 @@ const sampleListings = [ //created sample data in the form of the array
       price: 1200,
       location: "New Hampshire",
       country: "United States",
+      
     },
     {
       title: "Luxury Villa in the Maldives",

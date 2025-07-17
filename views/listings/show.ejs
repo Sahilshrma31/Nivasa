@@ -25,16 +25,14 @@
     </div>
     <br>
 
-    <!-- ✅ Show Edit/Delete only if current user is owner -->
-    <% if (currUser && listing.owner && currUser._id.equals(listing.owner._id)) { %>
-      <div class="btns">
+   
+    <div class="btns">
         <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark edit-btn">Edit</a>
         <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
           <button class="btn btn-dark delete-btn">Delete</button>
         </form>
       </div>
-    <% } %>
-  </div>
+      
 
   <!-- ✅ Review Form -->
   <div class="col-8 offset-3 mt-5">
