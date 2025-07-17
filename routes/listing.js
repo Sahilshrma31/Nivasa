@@ -13,7 +13,7 @@ const validateListing = (req, res, next) => {
   let { error } = listingSchema.validate(req.body);
   if (error) {
     let errMsg = error.details.map((el) => el.message).join(",");
-    throw new ExpressError(400, error);
+    throw new ExpressError(400, err);
   } else {
     next();
   }
@@ -35,39 +35,43 @@ router.get("/new",
 // Show
 router.get("/:id", wrapAsync(async (req, res) => {
     const { id } = req.params;
-    const listing = await Listing.findById(id).populate("reviews");
+    const listing = await Listing.findById(id)
+    .populate("reviews")
+    .populate("owner");
     if (!listing) {
       req.flash("error", "Listing you requested for does not exist");
       return res.redirect("/listings");
     }
-  
+    // console.log(listing);
     res.render("listings/show.ejs", { listing });
   }));
   
 
 // Create
 router.post(
-  "/",
-  isLoggedIn,
-  upload.single("listing[image]"),
-  validateListing,
-  wrapAsync(async (req, res) => {
-    const listingData = req.body.listing;
+  "/", 
+  isLoggedIn, //ye middleware ensure karta hai ki user login hai
+  upload.single("listing[image]"), //image upload ke liye multer middleware
+  validateListing, //ye function form data validate karta hai schema ke against
+  wrapAsync(async (req, res) => { //error handle karne ke liye async function wrapAsync se wrapped hai
+    const listingData = req.body.listing; //form se aaya hua listing data extract kar rahe hain
 
-    if (req.file) {
+    if (req.file) { //agar koi file upload hui hai
       listingData.image = {
-        url: req.file.path,
-        filename: req.file.filename,
+        url: req.file.path, //image ka path save kar rahe hain
+        filename: req.file.filename, //image ka filename save kar rahe hain
       };
     }
 
-    const newListing = new Listing(listingData);
-    await newListing.save();
+    const newListing = new Listing(listingData); //listingData ke basis pe naya Listing object banaya
+    newListing.owner=req.user._id; //current logged in user ko as owner assign kiya
+    await newListing.save(); //listing ko database me save kiya
 
-    req.flash("success", "New listing created successfully.");
-    res.redirect(`/listings`);
+    req.flash("success", "New listing created successfully."); //success message flash kiya
+    res.redirect(`/listings`); //user ko listings page pe redirect kiya
   })
 );
+
 
 // Edit form
 router.get("/:id/edit",
