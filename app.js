@@ -74,6 +74,9 @@ passport.deserializeUser(User.deserializeUser()); // Jab request aaye tab sessio
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");  
+  res.locals.currUser=req.user;  
+//   Why res.locals.curruser = req.user?
+// res.locals ek aisi object hoti hai jo har EJS template me accessible hoti hai automatically.
   next();
 });
 

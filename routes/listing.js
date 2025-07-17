@@ -6,6 +6,7 @@ const ExpressError = require("../utils/ExpressError");
 const Listing = require("../models/listing.js");
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
+const {isLoggedIn}=require("../middleware.js");
 
 // Validation middleware
 const validateListing = (req, res, next) => {
@@ -25,7 +26,9 @@ router.get("/", wrapAsync(async (req, res) => {
 }));
 
 // New form
-router.get("/new", wrapAsync(async (req, res) => {
+router.get("/new", 
+    isLoggedIn,
+    wrapAsync(async (req, res) => {
   res.render("listings/new.ejs");
 }));
 
@@ -45,6 +48,7 @@ router.get("/:id", wrapAsync(async (req, res) => {
 // Create
 router.post(
   "/",
+  isLoggedIn,
   upload.single("listing[image]"),
   validateListing,
   wrapAsync(async (req, res) => {
@@ -66,7 +70,9 @@ router.post(
 );
 
 // Edit form
-router.get("/:id/edit", wrapAsync(async (req, res) => {
+router.get("/:id/edit",
+     isLoggedIn,
+    wrapAsync(async (req, res) => {
     const { id } = req.params;
     const listing = await Listing.findById(id);
     if (!listing) {
@@ -81,6 +87,7 @@ router.get("/:id/edit", wrapAsync(async (req, res) => {
 // Update
 router.put(
   "/:id",
+  isLoggedIn,
   upload.single("listing[image]"),
   validateListing,
   wrapAsync(async (req, res) => {
@@ -93,7 +100,9 @@ router.put(
 );
 
 // Delete
-router.delete("/:id", wrapAsync(async (req, res) => {
+router.delete("/:id",
+    isLoggedIn,
+    wrapAsync(async (req, res) => {
   await Listing.findByIdAndDelete(req.params.id);
 
   req.flash("success", "Listing deleted successfully.");

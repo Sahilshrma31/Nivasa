@@ -16,8 +16,13 @@ router.post("/signup",wrapAsync(async(req,res)=>{
         const newUser=new User({email,username});
         const registeredUser=await User.register(newUser,password);
         console.log(registeredUser);
-        req.flash("success","welcome to Nivasa");
-        res.redirect("/listings");
+        req.login(registeredUser,(err)=>{
+            if(err){
+                return next(err);
+            }
+            req.flash("success","welcome to Nivasa");
+            res.redirect("/listings");
+        })
        }catch(e){
         req.flash("error",e.message);
         res.redirect("/signup");
@@ -35,6 +40,16 @@ router.post("/login",
         req.flash("success","Welcome back to Nivasa!");
         res.redirect("/listings");
 
+})
+
+router.get("/logout",(req,res)=>{
+    req.logout((err)=>{
+        if(err){
+          return  next(err);
+        }
+        req.flash("success","you are logged out now!");
+        res.redirect("/listings");
+    })
 })
 
 module.exports=router;
