@@ -33,18 +33,26 @@ router.get("/new",
 }));
 
 // Show
+const mongoose = require("mongoose");
+
 router.get("/:id", wrapAsync(async (req, res) => {
-    const { id } = req.params;
-    const listing = await Listing.findById(id)
+  const { id } = req.params;
+  const listing = await Listing.findById(id)
     .populate("reviews")
     .populate("owner");
-    if (!listing) {
-      req.flash("error", "Listing you requested for does not exist");
-      return res.redirect("/listings");
-    }
-    // console.log(listing);
-    res.render("listings/show.ejs", { listing });
-  }));
+
+  if (!listing) {
+    req.flash("error", "Listing you requested for does not exist");
+    return res.redirect("/listings");
+  }
+  // This makes sure .equals() won't throw an error in EJS
+  if (req.user) {
+    req.user._id = new mongoose.Types.ObjectId(req.user._id);
+  }
+  //  Pass currUser to EJS
+  res.render("listings/show.ejs", { listing, currUser: req.user });
+}));
+
   
 
 // Create
