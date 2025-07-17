@@ -10,6 +10,9 @@ const reviews=require("./routes/review.js");
 const session=require("express-session");
 const listings=require("./routes/listing.js");
 const flash=require("connect-flash");
+const passport=require("passport");
+const LocalStrategy=require("passport-local");
+const User=require("./models/user.js");
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/Nivasa";
 
@@ -53,13 +56,34 @@ app.get("/", (req, res) => {
   res.send("welcome to nivasa");
 });
 
-app.use(session(sessionoptions));
-app.use(flash());//yeh routes ke pehle hona chaiye
+app.use(session(sessionoptions)); // Session setup karta hai taaki login hone ke baad user remembered rahe (cookie ke through)
+app.use(flash()); // Flash messages enable karta hai (jaise error ya success alerts) — ek baar ke liye store hoti hai
+
+app.use(passport.initialize()); // Passport ko initialize karta hai authentication handle karne ke liye
+app.use(passport.session()); // Passport ko session ke saath connect karta hai taaki user logged-in state me rahe
+
+passport.use(new LocalStrategy(User.authenticate())); // Passport ko bolta hai local strategy use kare (username/password) — User model se authenticate method deta hai
+
+passport.serializeUser(User.serializeUser()); // Decide karta hai ki session me user ka kya store hoga (usually user.id)
+passport.deserializeUser(User.deserializeUser()); // Jab request aaye tab session se user.id se pura user object wapas laata hai
+
 
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
-  res.locals.error = req.flash("error");  // ✅ Add this line
+  res.locals.error = req.flash("error");  
   next();
+});
+
+app.get("/demouser", async (req, res) => {
+  // Ek naya fake user banaya with email and username (password abhi nahi diya)
+  let fakeUser = new User({
+    email: "student@gmail.com",
+    username: "nerd-student"
+  });
+  // User ko register kiya with password "helloWorld"
+  // register() method password ko hash karta hai + user ko save karta hai
+  let registeredUser = await User.register(fakeUser, "helloWorld");
+  res.send(registeredUser);
 });
 
 
