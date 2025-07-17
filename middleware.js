@@ -2,25 +2,25 @@ const Listing=require("./models/listing.js");
 const { listingSchema,reviewSchema } = require("./schema.js");
 const ExpressError = require("./utils/ExpressError");
 const Review = require("./models/review.js");
-
 module.exports.isLoggedIn = (req, res, next) => {
-    if (!req.isAuthenticated()) {
-      if (req.method === "GET") {
-        req.session.redirectUrl = req.originalUrl;
-      } else if (req.method === "POST" || req.method === "DELETE") {
-        const { id } = req.params;
+    if (!req.isAuthenticated()) { // Agar user login nahi hai toh check karo
+      if (req.method === "GET") { // Agar request GET hai (matlab page open kar raha hai)
+        req.session.redirectUrl = req.originalUrl; // Original URL ko session mein store karo, login ke baad yahin redirect karenge
+      } else if (req.method === "POST" || req.method === "DELETE") { // Agar POST ya DELETE request hai
+        const { id } = req.params; // URL se listing ka id nikaal rahe hain
         if (id) {
-          req.session.redirectUrl = `/listings/${id}`; // fallback to listing page
+          req.session.redirectUrl = `/listings/${id}`; // Listing detail page ko redirect URL bana lo
         } else {
-          req.session.redirectUrl = "/listings";
+          req.session.redirectUrl = "/listings"; // Agar id nahi mili toh fallback /listings pe redirect karo
         }
       }
   
-      req.flash("error", "You must be logged in first!");
-      return res.redirect("/login");
+      req.flash("error", "You must be logged in first!"); // Flash message dikhayein ki login karna zaroori hai
+      return res.redirect("/login"); // Login page pe redirect karo
     }
-    next();
-  };
+    next(); // Agar login hai toh aage badho
+};
+
   
 
 module.exports.saveRedirectUrl=(req,res,next)=>{  
