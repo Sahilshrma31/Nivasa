@@ -6,13 +6,15 @@ const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
-const reviews=require("./routes/review.js");
+const reviewRouter=require("./routes/review.js");
 const session=require("express-session");
-const listings=require("./routes/listing.js");
+const listingRouter=require("./routes/listing.js");
 const flash=require("connect-flash");
 const passport=require("passport");
 const LocalStrategy=require("passport-local");
 const User=require("./models/user.js");
+const userRouter=require("./routes/user.js");
+
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/Nivasa";
 
@@ -62,6 +64,7 @@ app.use(flash()); // Flash messages enable karta hai (jaise error ya success ale
 app.use(passport.initialize()); // Passport ko initialize karta hai authentication handle karne ke liye
 app.use(passport.session()); // Passport ko session ke saath connect karta hai taaki user logged-in state me rahe
 
+
 passport.use(new LocalStrategy(User.authenticate())); // Passport ko bolta hai local strategy use kare (username/password) — User model se authenticate method deta hai
 
 passport.serializeUser(User.serializeUser()); // Decide karta hai ki session me user ka kya store hoga (usually user.id)
@@ -87,8 +90,9 @@ app.get("/demouser", async (req, res) => {
 });
 
 
-app.use("/listings",listings);
-app.use("/listings/:id/reviews",reviews);
+app.use("/listings",listingRouter);
+app.use("/listings/:id/reviews",reviewRouter);
+app.use("/",userRouter);
 
 // Test route
 app.get(
