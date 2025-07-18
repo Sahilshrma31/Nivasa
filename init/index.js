@@ -45,7 +45,7 @@ const initDB = async () => {
     await newListing.save(); // save one by one to support geometry
   }
 
-  console.log("✅ All data seeded with geometry");
+  console.log("All data seeded with geometry");
 };
 
 initDB();

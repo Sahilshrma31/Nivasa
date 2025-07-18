@@ -1,17 +1,233 @@
-/* navbar */
 .navbar {
     height: 5rem;
-    background-color: white;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 30%, #e1f5fe 70%, #ffffff 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 0 3rem;
+    border: none;
+    box-shadow: 0 2px 20px rgba(33, 150, 243, 0.12);
+    border-bottom: 1px solid rgba(33, 150, 243, 0.15);
 }
 
-.fa-compass {
-    color: #fe424d;
-    font-size: 2rem;
+/* Enhanced animated background */
+.navbar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 10% 20%, rgba(33, 150, 243, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(254, 66, 77, 0.06) 0%, transparent 50%);
+    animation: subtleFloat 15s ease-in-out infinite;
+    z-index: 0;
+}
+
+@keyframes subtleFloat {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(20px); }
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    padding: 8px 15px;
+    margin-right: 3rem;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 12px rgba(33, 150, 243, 0.4));
+}
+
+.navbar-logo {
+    height: 45px;
+    width: auto;
+    background: none;
+    -webkit-mask: url('/nivasa.png') no-repeat center;
+    -webkit-mask-size: contain;
+    mask: url('/nivasa.png') no-repeat center;
+    mask-size: contain;
+    background: linear-gradient(135deg, #2196f3 0%, #03a9f4 30%, #00bcd4 70%, #fe424d 100%);
+    filter: drop-shadow(0 2px 8px rgba(33, 150, 243, 0.3));
+}
+
+.navbar-nav {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 2;
 }
 
 .nav-link {
-    color: #222222 !important;
+    color: #37474f !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 30px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin: 0 0.25rem;
+    position: relative;
+    overflow: hidden;
+    background: rgba(33, 150, 243, 0.08);
+    border: 1px solid rgba(33, 150, 243, 0.15);
 }
+
+.nav-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #2196f3 0%, #03a9f4 50%, #00bcd4 100%);
+    transition: left 0.4s ease;
+    z-index: -1;
+    border-radius: 30px;
+}
+
+.nav-link:hover::before {
+    left: 0;
+}
+
+.nav-link:hover {
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+    border-color: transparent;
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, #2196f3 0%, #03a9f4 50%, #00bcd4 100%);
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.5);
+    border-color: transparent;
+}
+
+.nav-link.active::before {
+    display: none;
+}
+
+/* Enhanced responsive behavior */
+@media (max-width: 992px) {
+    .navbar {
+        padding: 0 2rem;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #ffffff 100%);
+    }
+    
+    .navbar-brand {
+        margin-right: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 1rem;
+        height: 4.5rem;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 30%, #e1f5fe 70%, #ffffff 100%);
+    }
+    
+    .navbar-logo {
+        height: 35px;
+    }
+    
+    .navbar-brand {
+        margin-right: 1rem;
+    }
+    
+    .nav-link {
+        padding: 0.6rem 1.2rem !important;
+        font-size: 0.9rem;
+        margin: 0.25rem 0;
+        border-radius: 20px;
+        background: rgba(33, 150, 243, 0.1);
+        border-color: rgba(33, 150, 243, 0.2);
+    }
+    
+    .navbar-nav {
+        background: linear-gradient(135deg, rgba(227, 242, 253, 0.95) 0%, rgba(255, 255, 255, 0.95) 100%);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        box-shadow: 0 8px 25px rgba(33, 150, 243, 0.2);
+        border: 1px solid rgba(33, 150, 243, 0.15);
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0 0.75rem;
+    }
+    
+    .navbar-logo {
+        height: 30px;
+    }
+}
+
+/* Search Bar Component CSS */
+.search-container {
+    position: relative;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.search-input {
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    padding: 8px 45px 8px 20px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.search-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #0d6efd;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+.search-btn:hover {
+    background: #0b5ed7;
+}
+
+.search-btn i {
+    font-size: 14px;
+}
+
+/* Responsive adjustments for search bar */
+@media (max-width: 768px) {
+    .search-container {
+        max-width: 100%;
+        margin: 10px 0;
+    }
+}
+
+
 
 /* Footer */
 footer {
