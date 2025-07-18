@@ -21,9 +21,9 @@
 
             <div class="mb-3">
                 Original Listing Image <br />
-                <img src="<%= listing.image.url %>" alt="Listing Image" class="img-fluid rounded" style="max-height: 250px;" />
+                <img src="<%=originalImageUrl %>" alt="Listing Image" class="img-fluid rounded" style="max-height: 250px;" />
             </div>
-
+ 
             <div class="mb-3">
                 <label for="image" class="form-label">Upload New Image (optional)</label>
                 <input name="listing[image]" type="file" class="form-control" />
