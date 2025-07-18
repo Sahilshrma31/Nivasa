@@ -14,37 +14,46 @@
 }
 
 /* Footer */
-.f-info-links a {
-    text-decoration: none;
-    color: #222;
-}
-
-.f-info-links a:hover {
-    text-decoration: underline;
-}
-
-.f-info {
+footer {
+    width: 100%;
+  }
+  
+  .f-info {
+    width: 100%;
     text-align: center;
-    height: 8rem;
     background-color: #ebebeb;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-}
-
-.f-info-socials,
-.f-info-links,
-.f-info-brand {
-    width: 100%;
-    font-size: 1.2rem;
-    display: flex;
     align-items: center;
+    padding: 1.5rem 0;
+    gap: 1rem;
+  }
+  
+  .f-info-socials,
+  .f-info-clinks,
+  .f-info-brand {
+    display: flex;
     justify-content: center;
-}
-
-.f-info-socials i {
-    margin-right: 20px;
-}
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    font-size: 1.1rem;
+  }
+  
+  .f-info-clinks a {
+    text-decoration: none;
+    color: #222;
+  }
+  
+  .f-info-clinks a:hover {
+    text-decoration: underline;
+  }
+  
+  .f-info-socials i {
+    font-size: 1.5rem;
+  }
+  
 
 body {
     font-family: "Plus Jakarta Sans", sans-serif !important;
@@ -155,4 +164,22 @@ body {
     font-size: 1.5rem;
     display: block;
     margin-bottom: 0.5rem;
+}
+
+
+
+
+#map {
+    width: 100%;
+    max-width: 900px;
+    height: 400px;
+    margin: 0 auto; /* center the map */
+    border-radius: 8px;
+}
+
+/* Optional: Add spacing between map and footer */
+.map-section {
+    margin-bottom: 4rem; /* push footer down */
+    padding: 2rem 0;
+    background-color: #f8f9fa; /* optional light background */
 }
