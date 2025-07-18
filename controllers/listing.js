@@ -61,7 +61,15 @@ module.exports.showListing = async (req, res) => {
     const newListing = new Listing(listingData);
     newListing.owner = req.user._id;
   
-    newListing.geometry = response.body.features[0].geometry;
+    const geoData = response.body.features[0];
+
+if (!geoData) {
+  req.flash("error", "Invalid location. Please enter a valid location.");
+  return res.redirect("/listings/new");
+}
+
+newListing.geometry = geoData.geometry;
+
     let savedListing = await newListing.save();
     console.log(savedListing);
     req.flash("success", "New listing created successfully.");
