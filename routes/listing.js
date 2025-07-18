@@ -6,47 +6,43 @@ const multer = require("multer");
 const { isLoggedIn, isOwner, validateListing } = require("../middleware.js");
 const listingController = require("../controllers/listing");
 const mongoose = require("mongoose");
-const {storage}=require("../cloudconfig.js");
+const { storage } = require("../cloudconfig.js");
 const upload = multer({ storage });
-// GET all listings / POST new listing
+
+// Show all listings and handle new listing creation
 router.route("/")
-  .get(wrapAsync(listingController.index)) // show all listings
+  .get(wrapAsync(listingController.index))
   .post(
-    isLoggedIn, // check if user is logged in
-    upload.single("listing[image]"), // handle image upload
-    validateListing, // validate listing data
-    wrapAsync(listingController.createListing) // create new listing
+    isLoggedIn,
+    upload.single("listing[image]"),
+    validateListing,
+    wrapAsync(listingController.createListing)
   );
 
-// show form to create new listing
-router.get(
-  "/new",
-  isLoggedIn,
-  wrapAsync(listingController.renderNewForm)
-);
+// Show form to create a new listing
+router.get("/new", isLoggedIn, wrapAsync(listingController.renderNewForm));
 
-// show form to edit a listing
-router.get(
-  "/:id/edit",
-  isLoggedIn,
-  isOwner,
-  wrapAsync(listingController.renderEditForm)
-);
+// Search listings based on query
+// This MUST come before the dynamic ":id" route to avoid conflict
+router.get("/search", wrapAsync(listingController.searchListings));
 
-// show, update, or delete a listing
+// Show form to edit a specific listing
+router.get("/:id/edit", isLoggedIn, isOwner, wrapAsync(listingController.renderEditForm));
+
+// Show, update, or delete a specific listing
 router.route("/:id")
-  .get(wrapAsync(listingController.showListing)) // show listing details
+  .get(wrapAsync(listingController.showListing))
   .put(
     isLoggedIn,
     isOwner,
-    upload.single("listing[image]"), // handle image update
+    upload.single("listing[image]"),
     validateListing,
-    wrapAsync(listingController.updateListing) // update listing
+    wrapAsync(listingController.updateListing)
   )
   .delete(
     isLoggedIn,
     isOwner,
-    wrapAsync(listingController.destroyListing) // delete listing
+    wrapAsync(listingController.destroyListing)
   );
 
 module.exports = router;

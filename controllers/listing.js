@@ -40,6 +40,27 @@ module.exports.showListing = async (req, res) => {
       MAP_TOKEN: process.env.MAP_TOKEN, // ✅ Now accessible in EJS
     });
   };
+
+  module.exports.searchListings = async (req, res) => {
+    const searchQuery = req.query.q;
+  
+    if (!searchQuery || searchQuery.trim() === '') {
+      return res.redirect("/listings");
+    }
+  
+    const allListings = await Listing.find({
+      $or: [
+        { title: { $regex: searchQuery, $options: "i" } },
+        { description: { $regex: searchQuery, $options: "i" } },
+        { location: { $regex: searchQuery, $options: "i" } },
+        { country: { $regex: searchQuery, $options: "i" } }
+      ]
+    });
+  
+    res.render("listings/index.ejs", { allListings, query: searchQuery });
+  };
+  
+  
   
   module.exports.createListing = async (req, res) => {
 
