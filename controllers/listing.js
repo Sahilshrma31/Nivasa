@@ -42,23 +42,53 @@ module.exports.showListing = async (req, res) => {
   };
 
   module.exports.searchListings = async (req, res) => {
-    const searchQuery = req.query.q;
-  
-    if (!searchQuery || searchQuery.trim() === '') {
-      return res.redirect("/listings");
+    const { q, minPrice, maxPrice, sort } = req.query;
+
+    if (!q && !minPrice && !maxPrice && !sort) {
+        return res.redirect("/listings");
     }
-  
-    const allListings = await Listing.find({
-      $or: [
-        { title: { $regex: searchQuery, $options: "i" } },
-        { description: { $regex: searchQuery, $options: "i" } },
-        { location: { $regex: searchQuery, $options: "i" } },
-        { country: { $regex: searchQuery, $options: "i" } }
-      ]
+
+    const regex = new RegExp(q, "i");
+
+    // Base query
+    let query = {
+        $or: [
+            { title: { $regex: regex } },
+            { description: { $regex: regex } },
+            { location: { $regex: regex } },
+            { country: { $regex: regex } }
+        ]
+    };
+
+    // Price filter
+    if (minPrice || maxPrice) {
+        query.price = {};
+        if (minPrice) query.price.$gte = parseInt(minPrice);
+        if (maxPrice) query.price.$lte = parseInt(maxPrice);
+    }
+
+    // Base find query
+    let findQuery = Listing.find(query);
+
+    // Sorting
+    if (sort === "asc") {
+        findQuery = findQuery.sort({ price: 1 });
+    } else if (sort === "desc") {
+        findQuery = findQuery.sort({ price: -1 });
+    }
+
+    const allListings = await findQuery;
+
+    res.render("listings/index.ejs", {
+      allListings,
+      query: q || '',
+      minPrice: minPrice || '',
+      maxPrice: maxPrice || '',
+      sort: sort || ''
     });
-  
-    res.render("listings/index.ejs", { allListings, query: searchQuery });
-  };
+    
+};
+
   
   
   
