@@ -1,35 +1,62 @@
-<% layout("/layouts/boilerplate") -%>
+<% layout("/layouts/boilerplate") -%> 
+<!-- Includes the base layout file, usually contains the <head>, header, scripts, etc. -->
+
 <body>
     <h3>All listings</h3>
+    <!-- Main heading for the listings page -->
 
     <% if (typeof query !== 'undefined') { %>
+        <!-- If a search was made, show the term searched -->
         <h5>Results for "<%= query %>"</h5>
     <% } %>
 
     <% if (allListings.length === 0) { %>
-        <p>No listings found.</p>
+        <!-- If there are no listings (either from search or overall), show a friendly message -->
+        <p>No listings found for "<%= query %>"</p>
     <% } else { %>
+        <!-- If listings exist, loop over them and render each one as a card -->
+
         <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 g-4">
             <% for (let listing of allListings) { %>
+                <!-- Each listing shown inside a Bootstrap grid column -->
                 <div class="col">
                     <a href="/listings/<%= listing._id %>" class="listing-link">
+                        <!-- Each card links to the detailed view of that listing -->
+
                         <div class="card listing-card">
+                            <!-- Card component for showing listing preview -->
+
                             <img
                                 src="<%= listing.image?.url || 'https://via.placeholder.com/400x300?text=No+Image' %>"
                                 class="card-img-top"
                                 alt="listing_image"
                                 style="height: 20rem; object-fit: cover;"
                             >
-                            <div class="card-img-overlay"></div>
+                            <!-- Image handling:
+                                 - If the listing has an uploaded image, it’s displayed
+                                 - Otherwise, a placeholder image appears
+                                 - Fixed height and object-fit ensures uniform layout -->
+
+                            <div class="card-img-overlay"></div> 
+                            <!-- Optional overlay for style — can be used for gradient, shadow etc. -->
+
                             <div class="card-body">
+                                <!-- Main content of the card -->
+
                                 <p class="card-text">
                                     <b><%= listing.title %></b> <br>
                                     &#8377;
+                                    <!-- Currency symbol for Indian Rupee (₹) -->
+
                                     <% if (listing.price !== null && listing.price !== undefined) { %>
                                         <%= listing.price.toLocaleString("en-IN") %>
                                     <% } else { %>
                                         N/A
                                     <% } %>/night
+                                    <!-- Price display:
+                                         - If price exists, format it using `toLocaleString` for commas (e.g., 12,000)
+                                         - If price is missing, show "N/A"
+                                         - Appends “/night” to show price is per night -->
                                 </p>
                             </div>
                         </div>

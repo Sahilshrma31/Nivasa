@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top">
+<nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top animated-navbar ">
   <div class="container-fluid">
     <a class="navbar-brand" href="/">
       <img src="/nivasa.png" alt="Logo" class="navbar-logo">
@@ -9,35 +9,63 @@
     </button>
 
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <!-- Left nav links -->
       <div class="navbar-nav">
-        <a class="nav-link" aria-current="page" href="/">Home</a>
+        <a class="nav-link" href="/">Home</a>
         <a class="nav-link" href="/listings">All listings</a>
         <a class="nav-link" href="/listings/new">Add new listings</a>
       </div>
 
-      <!-- ✅ Search Bar Component (fixed) -->
-      <div class="navbar-nav mx-auto">
-        <form class="search-container" action="/listings/search" method="GET">
+      <!-- ✅ Centered Search + Filters -->
+      <div class="navbar-nav mx-auto w-100 justify-content-center">
+        <form class="d-flex flex-wrap align-items-center gap-2" action="/listings/search" method="GET">
+
+          <!-- Search Query -->
           <input 
             type="text" 
-            class="search-input" 
             name="q" 
-            placeholder="Search listings..."
-            aria-label="Search listings"
+            class="form-control form-control-sm"
+            placeholder="Search..." 
+            style="max-width: 160px;"
             value="<%= typeof query !== 'undefined' ? query : '' %>">
-          <button class="search-btn" type="submit" aria-label="Search">
+
+          <!-- Min Price -->
+          <input 
+            type="number" 
+            name="minPrice" 
+            class="form-control form-control-sm"
+            placeholder="Min ₹" 
+            style="width: 100px;">
+
+          <!-- Max Price -->
+          <input 
+            type="number" 
+            name="maxPrice" 
+            class="form-control form-control-sm"
+            placeholder="Max ₹" 
+            style="width: 100px;">
+
+          <!-- Sort -->
+          <select name="sort" class="form-select form-select-sm" style="width: 140px;">
+            <option value="">Sort</option>
+            <option value="asc">₹ Low → High</option>
+            <option value="desc">₹ High → Low</option>
+          </select>
+
+          <!-- Button -->
+          <button class="btn btn-sm btn-outline-primary" type="submit">
             <i class="fas fa-search"></i>
           </button>
         </form>
       </div>
 
+      <!-- Right auth links -->
       <div class="navbar-nav ms-auto">
         <% if (!currUser) { %>
-          <a class="nav-link" aria-current="page" href="/signup">Sign up</a>
-          <a class="nav-link" aria-current="page" href="/login">Log in</a>
-        <% } %>
-        <% if (currUser) { %>
-          <a class="nav-link" aria-current="page" href="/logout">Log out</a>
+          <a class="nav-link" href="/signup">Sign up</a>
+          <a class="nav-link" href="/login">Log in</a>
+        <% } else { %>
+          <a class="nav-link" href="/logout">Log out</a>
         <% } %>
       </div>
     </div>
