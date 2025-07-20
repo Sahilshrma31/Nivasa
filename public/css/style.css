@@ -961,74 +961,73 @@ body {
     padding: 2rem 0;
     background-color: #f8f9fa;
 }
-/* Enable dark background and light text globally */
+/* Smooth transition */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark Mode Base */
 body.dark-mode {
     background-color: #121212;
     color: #f0f0f0;
 }
 
-/* Set dark background and white text for cards */
+/* Cards in dark mode */
 body.dark-mode .listing-card,
 body.dark-mode .show-card {
     background-color: #1e1e1e !important;
     color: #ffffff !important;
 }
 
-/* Force white text inside card body and text blocks */
+/* Text inside card */
 body.dark-mode .card-body,
 body.dark-mode .card-text,
 body.dark-mode .card-text b {
     color: #ffffff !important;
 }
 
-/* Dark overlay when hovering on card image */
+/* Dark overlay hover */
 body.dark-mode .card-img-overlay:hover {
     background-color: #000000;
     opacity: 0.2;
 }
 
-/* Style for edit button */
+/* Edit button */
 body.dark-mode .edit-btn {
     background-color: #e74c3c;
     border-color: #e74c3c;
 }
-
-/* Hover effect for edit button */
 body.dark-mode .edit-btn:hover {
     background-color: #c0392b;
 }
 
-/* Style for delete button */
+/* Delete button */
 body.dark-mode .delete-btn {
     background-color: #2c3e50;
     border-color: #2c3e50;
 }
-
-/* Hover effect for delete button */
 body.dark-mode .delete-btn:hover {
     background-color: #1a252f;
 }
 
-/* Dark background for map section */
+/* Map section */
 body.dark-mode .map-section {
     background-color: #1a1a1a;
 }
 
-/* Slightly reduce image brightness */
+/* Image brightness */
 body.dark-mode .card-img-top {
     filter: brightness(90%);
 }
 
-/* Hover effect for dark mode toggle button */
-#toggleDarkMode:hover {
-    background-color: #e2e6ea;
+/* Filter box */
+body.dark-mode .filter-box {
+    background-color: #2b2b2b;
+    color: #f1f1f1;
+    border-color: #444;
 }
 
-
-/* Review card fixes in dark mode */
-
-
-/* Light background for review card to make text visible */
+/* Review card overrides */
 body.dark-mode .review-card {
     background-color: #ffffff !important;
     border: 1px solid #ccc !important;
@@ -1036,7 +1035,6 @@ body.dark-mode .review-card {
     color: #000 !important;
 }
 
-/* Make review text and author black so it is readable */
 body.dark-mode .review-card .card-body,
 body.dark-mode .review-card .card-text,
 body.dark-mode .review-card p,
@@ -1047,44 +1045,23 @@ body.dark-mode .review-card small {
     color: #000 !important;
 }
 
-/* Set color for star icons in reviews */
 body.dark-mode .review-card .star-rating {
     color: #ffc107 !important;
 }
 
-/* Style buttons in review card */
 body.dark-mode .review-card .btn {
     background-color: #404040 !important;
     border-color: #404040 !important;
     color: #f0f0f0 !important;
 }
 
-/* Hover effect for buttons in review card */
 body.dark-mode .review-card .btn:hover {
     background-color: #505050 !important;
     border-color: #505050 !important;
 }
 
-/* Ensure text inside card wraps properly */
-.dark-mode .review-card .card-body {
+body.dark-mode .review-card .card-body {
     overflow: visible !important;
     white-space: normal !important;
     word-wrap: break-word;
 }
-
-/*  Light mode styles (default) */
-.filter-box {
-    background-color: #f8f9fa; /* Bootstrap's bg-light */
-    color: #212529;            /* Bootstrap's text-dark */
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    font-size: 1rem;
-  }
-  
-  /* Dark mode styles */
-  body.dark-mode .filter-box {
-    background-color: #2b2b2b;
-    color: #f1f1f1;
-    border-color: #444;
-  }
-  
