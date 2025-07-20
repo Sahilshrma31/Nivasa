@@ -1065,3 +1065,28 @@ body.dark-mode .review-card .card-body {
     white-space: normal !important;
     word-wrap: break-word;
 }
+
+/* Fix: Make "No reviews yet" message white in dark mode */
+body.dark-mode .no-reviews-message {
+    color: #f0f0f0;
+}
+body.dark-mode .text-muted {
+    color: #ccc !important;
+}
+
+
+/* Dark mode fix for booking cards */
+body.dark-mode .card {
+    background-color: #1e1e1e !important;
+    color: #f0f0f0 !important;
+    border: 1px solid #333 !important;
+}
+
+/* Ensure title, text, and small elements show clearly */
+body.dark-mode .card-title,
+body.dark-mode .card-text,
+body.dark-mode .fw-bold,
+body.dark-mode .text-muted,
+body.dark-mode .small {
+    color: #f0f0f0 !important;
+}
