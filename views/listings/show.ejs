@@ -1,14 +1,13 @@
 <% layout("/layouts/boilerplate") %>
+
 <script>
   const mapToken = "<%= process.env.MAP_TOKEN %>";
-  const listing= <%- JSON.stringify(listing) %>;
-
-
+  const listing = <%- JSON.stringify(listing) %>;
 </script>
 
 <div class="container-fluid px-0">
   <div class="row justify-content-center">
-    
+
     <!-- Title -->
     <div class="col-12 col-md-8 text-center mt-4">
       <h3><%= listing.title %></h3>
@@ -20,17 +19,14 @@
         <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="card-img-top show-img rounded" alt="Listing Image">
 
         <div class="card-body">
-          <!-- Owner Centered -->
           <p class="card-text text-muted text-center mb-4">
             <i>Owned by: <%= listing.owner.username %></i>
           </p>
 
-          <!-- Left-aligned with Bold Labels -->
           <div class="text-start">
             <p class="card-text"><strong>Description:</strong> <%= listing.description %></p>
 
-            <p class="card-text">
-              <strong>Price:</strong> ₹
+            <p class="card-text"><strong>Price:</strong> ₹
               <% if (listing.price) { %>
                 <%= listing.price.toLocaleString("en-IN") %>
               <% } else { %>
@@ -42,18 +38,39 @@
             <p class="card-text"><strong>Country:</strong> <%= listing.country %></p>
           </div>
 
-          <!-- Owner-only Edit/Delete Buttons -->
-          <% if (currUser && listing.owner._id.equals(currUser._id)) { %>
-            <div class="d-flex justify-content-center mt-3 gap-3">
-              <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark">Edit</a>
-              <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
-                <button class="btn btn-dark">Delete</button>
-              </form>
-            </div>
-          <% } %>
-        </div>
-      </div>
-    </div>
+    
+         <!-- Booking / Payment Button -->
+<% if (!currUser) { %>
+  <!-- User not logged in -->
+  <p class="text-center mt-4">
+    <a href="/login" class="btn btn-outline-primary">Login to Book This Listing</a>
+  </p>
+<% } else if (isOwner) { %>
+  <!-- User is the owner -->
+  <div class="d-flex justify-content-center mt-3 gap-3">
+    <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark">Edit</a>
+    <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" style="display: inline;">
+      <button class="btn btn-dark">Delete</button>
+    </form>
+  </div>
+<% } else if (hasBooked) { %>
+  <!-- User has already booked -->
+  <div class="text-center mt-4">
+    <p class="text-success fw-semibold"> You’ve already booked this listing.</p>
+  </div>
+<% } else { %>
+  <!-- User is logged in and hasn't booked yet -->
+  <div class="text-center mt-4">
+    <p><strong>Ready to book this amazing place?</strong></p>
+    <form id="paymentForm">
+      <input type="hidden" name="amount" value="<%= listing.price %>">
+      <button type="button" class="btn btn-success btn-lg" id="rzp-button">
+        Book Now - Pay ₹<%= listing.price.toLocaleString("en-IN") %>
+      </button>
+    </form>
+  </div>
+<% } %>
+
 
     <!-- Review Section -->
     <div class="col-12 col-md-8 mt-5">
@@ -61,7 +78,6 @@
         <hr />
         <h4 class="mb-4 text-center">Leave a Review</h4>
         <form action="/listings/<%= listing._id %>/reviews" method="POST" class="needs-validation" novalidate>
-          <!-- ⭐ Rating -->
           <div class="mb-3">
             <label for="rating" class="form-label">Rating</label>
             <fieldset class="starability-slot">
@@ -73,18 +89,9 @@
             </fieldset>
           </div>
 
-          <!--  Comment -->
           <div class="mb-3">
             <label for="comment" class="form-label">Comments</label>
-            <textarea 
-              class="form-control" 
-              name="review[comment]" 
-              id="comment" 
-              cols="30" 
-              rows="5" 
-              placeholder="Write your feedback here..."
-              required
-            ></textarea>
+            <textarea class="form-control" name="review[comment]" id="comment" cols="30" rows="5" required></textarea>
             <div class="invalid-feedback">Please add some comments for the review.</div>
           </div>
 
@@ -96,23 +103,26 @@
 
       <hr class="my-4" />
 
-      <!-- All Reviews -->
-      <% if (listing.reviews.length > 0) { %>
+      <% if (listing.reviews && listing.reviews.length > 0) { %>
         <div class="row justify-content-center">
           <p class="text-center"><b>All Reviews</b></p>
           <% for (let review of listing.reviews) { %>
-            <div class="card col-10 col-md-5 mx-2 my-2">
+            <div class="card review-card col-10 col-md-5 mx-2 my-2">
               <div class="card-body">
                 <h5 class="card-title"><%= review.author.username %></h5>
                 <p class="card-text"><%= review.comment %></p>
                 <fieldset class="starability-result" data-rating="<%= review.rating %>"></fieldset>
-                <form class="mb-3" method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
-                  <button class="btn btn-sm btn-dark">Delete</button>
-                </form>
+                <% if (currUser && (currUser._id.toString() === review.author._id.toString() || isOwner)) { %>
+                  <form method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
+                    <button class="btn btn-sm btn-dark">Delete</button>
+                  </form>
+                <% } %>
               </div>
             </div>
           <% } %>
         </div>
+      <% } else { %>
+        <p class="text-center text-muted">No reviews yet. Be the first to review!</p>
       <% } %>
     </div>
 
@@ -125,7 +135,105 @@
         <div id="map"></div>
       </div>
     </div>
-  </div> <!-- end row -->
-</div> <!-- end container-fluid -->
+
+  </div>
+</div>
+
+<!-- Razorpay Checkout.js -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+  const paymentForm = document.getElementById("paymentForm");
+  const button = document.getElementById("rzp-button");
+
+  if (button) {
+    console.log("Razorpay button found, setting up payment handler");
+
+    button.onclick = async function (e) {
+      e.preventDefault();
+      console.log("Payment button clicked");
+
+      button.disabled = true;
+      button.textContent = "Processing...";
+
+      try {
+        const amount = <%= JSON.stringify(listing.price) %>;
+        console.log("Creating order for amount:", amount);
+
+        const res = await fetch("/payments/create-order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ amount }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to create order");
+        }
+
+        const order = await res.json();
+        console.log("Order created:", order);
+
+        const options = {
+          key: "<%= razorpayKeyId %>", // Make sure you're passing this from backend to EJS
+          amount: order.amount,
+          currency: "INR",
+          name: "Nivasas",
+          description: "Booking Payment for <%= listing.title %>",
+          order_id: order.id,
+          handler: async function (response) {
+            console.log("Payment successful:", response);
+
+            try {
+              const bookingRes = await fetch("/bookings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  listingId: "<%= listing._id %>",
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpayOrderId: response.razorpay_order_id,
+                }),
+              });
+
+              if (bookingRes.ok) {
+                alert("Payment Successful! Booking confirmed.");
+                window.location.href = "/bookings/mine";
+              } else {
+                alert("Payment successful but booking failed. Please contact support.");
+              }
+            } catch (error) {
+              console.error("Booking error:", error);
+              alert("Payment successful but booking failed. Please contact support.");
+            }
+          },
+          prefill: {
+            name: "<%= currUser ? currUser.username : 'Guest User' %>",
+            email: "<%= currUser && currUser.email ? currUser.email : 'guest@example.com' %>",
+            contact: "9999999999"
+          },
+          theme: { color: "#3399cc" },
+          modal: {
+            ondismiss: function () {
+              console.log("Payment modal dismissed");
+              button.disabled = false;
+              button.textContent = "Book Now - Pay ₹<%= listing.price.toLocaleString('en-IN') %>";
+            }
+          }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+      } catch (error) {
+        console.error("Payment error:", error);
+        alert("Failed to initiate payment. Please try again.");
+        button.disabled = false;
+        button.textContent = "Book Now - Pay ₹<%= listing.price.toLocaleString('en-IN') %>";
+      }
+    };
+  } else {
+    console.log("Razorpay button not found - user might be owner or not logged in");
+  }
+</script>
 
 <script src="/js/map.js"></script>

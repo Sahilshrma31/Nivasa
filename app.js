@@ -19,6 +19,8 @@ const User=require("./models/user.js");
 const userRouter=require("./routes/user.js");
 const ExpressError = require("./utils/ExpressError");
 const { configDotenv } = require("dotenv");
+const paymentRoutes = require("./routes/payment");
+const bookingRoutes = require("./routes/booking");
 
 
 
@@ -59,9 +61,10 @@ const sessionoptions={
     }
 };
 
+
 // Home route
 app.get("/", (req, res) => {
-  res.send("welcome to nivasa");
+  res.redirect("/listings");
 });
 
 app.use(session(sessionoptions)); // Session setup karta hai taaki login hone ke baad user remembered rahe (cookie ke through)
@@ -102,6 +105,12 @@ app.get("/demouser", async (req, res) => {
 app.use("/listings",listingRouter);
 app.use("/listings/:id/reviews",reviewRouter);
 app.use("/",userRouter);
+app.use("/payments", paymentRoutes);
+app.use("/bookings", bookingRoutes);
+
+
+
+
 
 // Test route
 app.get(
