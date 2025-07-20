@@ -5,7 +5,8 @@
   const listing = <%- JSON.stringify(listing) %>;
 </script>
 
-<div class="container-fluid px-0">
+<!-- Main Content -->
+<div class="container my-5">
   <div class="row justify-content-center">
 
     <!-- Title -->
@@ -13,7 +14,7 @@
       <h3><%= listing.title %></h3>
     </div>
 
-    <!-- Image & Details -->
+    <!-- Listing Card -->
     <div class="col-12 col-md-6 d-flex justify-content-center mt-4">
       <div class="card w-100 show-card listing-card">
         <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="card-img-top show-img rounded" alt="Listing Image">
@@ -38,42 +39,41 @@
             <p class="card-text"><strong>Country:</strong> <%= listing.country %></p>
           </div>
 
-    
-         <!-- Booking / Payment Button -->
-<% if (!currUser) { %>
-  <!-- User not logged in -->
-  <p class="text-center mt-4">
-    <a href="/login" class="btn btn-outline-primary">Login to Book This Listing</a>
-  </p>
-<% } else if (isOwner) { %>
-  <!-- User is the owner -->
-  <div class="d-flex justify-content-center mt-3 gap-3">
-    <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark">Edit</a>
-    <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" style="display: inline;">
-      <button class="btn btn-dark">Delete</button>
-    </form>
+          <!-- Booking / Payment Button -->
+          <% if (!currUser) { %>
+            <p class="text-center mt-4">
+              <a href="/login" class="btn btn-outline-primary">Login to Book This Listing</a>
+            </p>
+          <% } else if (isOwner) { %>
+            <div class="d-flex justify-content-center mt-3 gap-3">
+              <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark">Edit</a>
+              <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" style="display: inline;">
+                <button class="btn btn-dark">Delete</button>
+              </form>
+            </div>
+          <% } else if (hasBooked) { %>
+            <div class="text-center mt-4">
+              <p class="text-success fw-semibold">You’ve already booked this listing.</p>
+            </div>
+          <% } else { %>
+            <div class="text-center mt-4">
+              <p><strong>Ready to book this amazing place?</strong></p>
+              <form id="paymentForm">
+                <input type="hidden" name="amount" value="<%= listing.price %>">
+                <button type="button" class="btn btn-success btn-lg" id="rzp-button">
+                  Book Now - Pay ₹<%= listing.price.toLocaleString("en-IN") %>
+                </button>
+              </form>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
   </div>
-<% } else if (hasBooked) { %>
-  <!-- User has already booked -->
-  <div class="text-center mt-4">
-    <p class="text-success fw-semibold"> You’ve already booked this listing.</p>
-  </div>
-<% } else { %>
-  <!-- User is logged in and hasn't booked yet -->
-  <div class="text-center mt-4">
-    <p><strong>Ready to book this amazing place?</strong></p>
-    <form id="paymentForm">
-      <input type="hidden" name="amount" value="<%= listing.price %>">
-      <button type="button" class="btn btn-success btn-lg" id="rzp-button">
-        Book Now - Pay ₹<%= listing.price.toLocaleString("en-IN") %>
-      </button>
-    </form>
-  </div>
-<% } %>
 
-
-    <!-- Review Section -->
-    <div class="col-12 col-md-8 mt-5">
+  <!-- NEW ROW: Review Section (Below listing) -->
+  <div class="row justify-content-center mt-5">
+    <div class="col-12 col-md-6">
       <% if (currUser) { %>
         <hr />
         <h4 class="mb-4 text-center">Leave a Review</h4>
@@ -107,7 +107,7 @@
         <div class="row justify-content-center">
           <p class="text-center"><b>All Reviews</b></p>
           <% for (let review of listing.reviews) { %>
-            <div class="card review-card col-10 col-md-5 mx-2 my-2">
+            <div class="card review-card col-10 col-md-11 mx-auto my-2">
               <div class="card-body">
                 <h5 class="card-title"><%= review.author.username %></h5>
                 <p class="card-text"><%= review.comment %></p>
@@ -125,17 +125,18 @@
         <p class="text-center text-muted">No reviews yet. Be the first to review!</p>
       <% } %>
     </div>
+  </div>
 
-    <!-- Map Section -->
-    <div class="col-12 mt-5 mb-5">
-      <div class="text-center mb-4">
-        <h3>Where You Will Be</h3>
-      </div>
+  <!-- Map Section -->
+  <div class="row justify-content-center mt-5">
+    <div class="col-12 text-center mb-4">
+      <h3>Where You Will Be</h3>
+    </div>
+    <div class="col-12 col-md-10">
       <div class="map-wrapper mb-5">
         <div id="map"></div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -146,44 +147,32 @@
   const button = document.getElementById("rzp-button");
 
   if (button) {
-    console.log("Razorpay button found, setting up payment handler");
-
     button.onclick = async function (e) {
       e.preventDefault();
-      console.log("Payment button clicked");
-
       button.disabled = true;
       button.textContent = "Processing...";
 
       try {
         const amount = <%= JSON.stringify(listing.price) %>;
-        console.log("Creating order for amount:", amount);
 
         const res = await fetch("/payments/create-order", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ amount }),
         });
 
-        if (!res.ok) {
-          throw new Error("Failed to create order");
-        }
+        if (!res.ok) throw new Error("Failed to create order");
 
         const order = await res.json();
-        console.log("Order created:", order);
 
         const options = {
-          key: "<%= razorpayKeyId %>", // Make sure you're passing this from backend to EJS
+          key: "<%= razorpayKeyId %>",
           amount: order.amount,
           currency: "INR",
           name: "Nivasas",
           description: "Booking Payment for <%= listing.title %>",
           order_id: order.id,
           handler: async function (response) {
-            console.log("Payment successful:", response);
-
             try {
               const bookingRes = await fetch("/bookings", {
                 method: "POST",
@@ -214,7 +203,6 @@
           theme: { color: "#3399cc" },
           modal: {
             ondismiss: function () {
-              console.log("Payment modal dismissed");
               button.disabled = false;
               button.textContent = "Book Now - Pay ₹<%= listing.price.toLocaleString('en-IN') %>";
             }
@@ -231,8 +219,6 @@
         button.textContent = "Book Now - Pay ₹<%= listing.price.toLocaleString('en-IN') %>";
       }
     };
-  } else {
-    console.log("Razorpay button not found - user might be owner or not logged in");
   }
 </script>
 

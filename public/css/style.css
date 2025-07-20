@@ -310,6 +310,22 @@
     overflow: hidden;
 }
 
+@media (max-width: 768px) {
+    .search-container, .form-inline {
+      flex-direction: column !important;
+      width: 100%;
+    }
+    
+    .search-container input, .form-control {
+      width: 100% !important;
+      margin-bottom: 10px;
+    }
+    
+    .search-container button, .btn {
+      width: 100%;
+    }
+  }
+
 /* Rotating icon animation */
 .search-btn i {
     font-size: 16px; /* Bigger icon */

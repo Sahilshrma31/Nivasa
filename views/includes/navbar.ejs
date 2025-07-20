@@ -13,6 +13,12 @@
       <div class="navbar-nav">
         <a class="nav-link" href="/listings">All Nivasa</a>
         <a class="nav-link" href="/listings/new">Add new Nivasa</a>
+        <% if (currUser) { %>
+          <li class="nav-item">
+            <a class="nav-link" href="/bookings/mine">My Bookings</a>
+          </li>
+        <% } %>
+        
       </div>
 
       <!-- ✅ Centered Search + Filters -->
