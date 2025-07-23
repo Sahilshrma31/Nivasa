@@ -1,4 +1,4 @@
-/* Professional Navbar Styles - Spacious Version with Darker Animations */
+
 .navbar {
     height: 5rem; /* Increased from 4.25rem */
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 30%, #e2e8f0 100%);
@@ -845,9 +845,6 @@ footer {
 }
 
 /* Footer Responsive Design */
-/* REPLACE the existing mobile responsive sections at the bottom of your first CSS file */
-
-/* Footer Responsive Design - UPDATED */
 @media (max-width: 992px) {
     .footer-links-row {
         gap: 1.5rem;

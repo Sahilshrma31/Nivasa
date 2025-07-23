@@ -10,7 +10,7 @@ console.log('--- Gemini API Connection Test ---');
 
 // 1. Check if the API key was loaded from the .env file
 if (!GEMINI_API_KEY || GEMINI_API_KEY.length < 20) {
-  console.error('\n[FATAL_ERROR] ❌ API Key not found or is too short in .env file.');
+  console.error('\n[FATAL_ERROR]  API Key not found or is too short in .env file.');
   console.log('Please ensure your .env file exists in the same folder and contains: GEMINI_API_KEY="YourActualKey"');
   process.exit(1); // Stop the script
 }
@@ -36,7 +36,7 @@ async function testConnection() {
 
   } catch (error) {
     // If we get here, the key or connection is broken.
-    console.error('\n[FATAL_ERROR] ❌ The API call failed.');
+    console.error('\n[FATAL_ERROR]  The API call failed.');
     console.error('This is the most likely source of your problem.');
 
     if (error.response) {

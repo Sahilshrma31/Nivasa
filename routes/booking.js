@@ -4,7 +4,7 @@ const Booking = require("../models/booking");
 const Listing = require("../models/listing");
 const { isLoggedIn } = require("../middleware");
 
-// ✅ Create Booking after payment
+//  Create Booking after payment
 router.post("/", isLoggedIn, async (req, res) => {
   const { listingId, razorpayPaymentId, razorpayOrderId } = req.body;
 
@@ -18,13 +18,13 @@ router.post("/", isLoggedIn, async (req, res) => {
   res.status(200).json({ success: true });
 });
 
-// ✅ View user bookings
+//  View user bookings
 router.get("/mine", isLoggedIn, async (req, res) => {
   const bookings = await Booking.find({ user: req.user._id }).populate("listing");
   res.render("bookings/index", { bookings, currUser: req.user });
 });
 
-// ✅ Cancel a booking
+//  Cancel a booking
 router.delete("/:id", isLoggedIn, async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);

@@ -1,5 +1,5 @@
 const Listing = require("../models/listing");
-const Booking = require("../models/booking"); // ✅ Added this line
+const Booking = require("../models/booking"); 
 const mongoose = require("mongoose");
 const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
 const mapToken = process.env.MAP_TOKEN;
@@ -162,8 +162,6 @@ module.exports.searchListings = async (req, res) => {
 };
 
 // Show a specific listing
-
-
 module.exports.showListing = async (req, res) => {
   const listing = await Listing.findById(req.params.id)
     .populate({ path: "reviews", populate: { path: "author" } })
