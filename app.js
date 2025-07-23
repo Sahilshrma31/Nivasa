@@ -116,7 +116,7 @@ app.get(
   })
 );
 
-// Catch-all route for 404 errors
+// Catch-all routes for 404 errors
 // app.all("*", (req, res, next) => {
 //   next(new ExpressError(404, "Page not found!"));
 // });
