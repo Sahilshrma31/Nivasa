@@ -8,6 +8,8 @@ const listingController = require("../controllers/listing");
 const mongoose = require("mongoose");
 const { storage } = require("../cloudconfig.js");
 const upload = multer({ storage });
+const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
+
 
 // Add this line at the top — after imports
 router.use((req, res, next) => {
@@ -43,10 +45,12 @@ router.post("/generate-description", wrapAsync(async (req, res) => {
     return res.status(400).json({ error: "Missing data for description generation" });
   }
 
-  const description = `Discover our listing: ${title} located in ${location}. Enjoy your stay for just ₹${price} per night. Ideal for travelers looking for comfort and convenience.`;
+  // Use Gemini API to generate dynamic description
+  const description = await generateSmartDescription(title, location, price);
 
   res.json({ description });
 }));
+
 
 
 // Show, update, or delete a specific listing

@@ -22,6 +22,7 @@ const ExpressError = require("./utils/ExpressError");
 const { configDotenv } = require("dotenv");
 const paymentRoutes = require("./routes/payment");
 const bookingRoutes = require("./routes/booking");
+const {generateSmartDescription}=require("./utils/aiDescriptionHelper");
 
 // MongoDB connection
 const MONGO_URL = "mongodb://127.0.0.1:27017/Nivasa";
