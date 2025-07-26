@@ -1,66 +1,106 @@
 <% layout("/layouts/boilerplate") %>
 
+<style>
+  @media (min-width: 768px) {
+    .listing-card-desktop {
+      max-width: 480px !important;
+    }
+  }
+</style>
+
 <script>
   const mapToken = "<%= process.env.MAP_TOKEN %>";
   const listing = <%- JSON.stringify(listing) %>;
 </script>
 
 <!-- Main Content -->
-<div class="container my-5">
+<div class="container-fluid px-4 px-md-5 my-5">
   <div class="row justify-content-center">
 
     <!-- Title -->
-    <div class="col-12 col-md-8 text-center mt-4">
+    <div class="col-12 col-md-8 text-center mt-4 px-3">
       <h3><%= listing.title %></h3>
     </div>
 
     <!-- Listing Card -->
-    <div class="col-12 col-md-6 d-flex justify-content-center mt-4">
-      <div class="card w-100 show-card listing-card">
-        <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="card-img-top show-img rounded" alt="Listing Image">
-
-        <div class="card-body">
-          <p class="card-text text-muted text-center mb-4">
-            <i>Owned by: <%= listing.owner.username %></i>
-          </p>
-
-          <div class="text-start">
-            <p class="card-text"><strong>Description:</strong> <%= listing.description %></p>
-
-            <p class="card-text"><strong>Price:</strong> ₹
-              <% if (listing.price) { %>
-                <%= listing.price.toLocaleString("en-IN") %>
-              <% } else { %>
-                N/A
-              <% } %>
-            </p>
-
-            <p class="card-text"><strong>Location:</strong> <%= listing.location %></p>
-            <p class="card-text"><strong>Country:</strong> <%= listing.country %></p>
+    <div class="col-12 col-md-6 d-flex justify-content-center mt-4 px-3 px-md-4">
+      <div class="card shadow border-0 rounded-3 overflow-hidden listing-card-desktop" style="width: 100%; max-width: 380px;">
+        <div class="position-relative">
+          <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="card-img-top d-block d-md-none" style="height: 160px; object-fit: cover;" alt="Listing Image">
+          <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="card-img-top d-none d-md-block" style="height: 220px; object-fit: cover;" alt="Listing Image">
+          <div class="position-absolute bottom-0 start-0 w-100" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+            <div class="px-3 py-2">
+              <div class="text-white fw-bold small d-block d-md-none">
+                ₹
+                <% if (listing.price) { %>
+                  <%= listing.price.toLocaleString("en-IN") %>
+                <% } else { %>
+                  N/A
+                <% } %>
+              </div>
+              <div class="text-white fw-bold d-none d-md-block">
+                ₹
+                <% if (listing.price) { %>
+                  <%= listing.price.toLocaleString("en-IN") %>
+                <% } else { %>
+                  N/A
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card-body p-3 p-md-4">
+          <div class="d-flex align-items-center mb-2 mb-md-3">
+            <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center me-2" style="width: 26px; height: 26px; font-size: 12px;">
+              <%= listing.owner.username.charAt(0).toUpperCase() %>
+            </div>
+            <small class="text-muted d-block d-md-none">@<%= listing.owner.username %></small>
+            <span class="text-muted d-none d-md-block">@<%= listing.owner.username %></span>
+          </div>
+          
+          <p class="text-body mb-3 small d-block d-md-none lh-base"><%= listing.description %></p>
+          <p class="text-body mb-3 d-none d-md-block lh-base"><%= listing.description %></p>
+          
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <div class="text-center py-2 bg-light bg-dark-subtle rounded-2">
+                <div class="text-muted" style="font-size: 10px;">LOCATION</div>
+                <div class="fw-semibold text-dark text-light small d-block d-md-none"><%= listing.location %></div>
+                <div class="fw-semibold text-dark text-light d-none d-md-block"><%= listing.location %></div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-center py-2 bg-light bg-dark-subtle rounded-2">
+                <div class="text-muted" style="font-size: 10px;">COUNTRY</div>
+                <div class="fw-semibold text-dark text-light small d-block d-md-none"><%= listing.country %></div>
+                <div class="fw-semibold text-dark text-light d-none d-md-block"><%= listing.country %></div>
+              </div>
+            </div>
           </div>
 
           <!-- Booking / Payment Button -->
           <% if (!currUser) { %>
-            <p class="text-center mt-4">
-              <a href="/login" class="btn btn-outline-primary">Login to Book This Listing</a>
-            </p>
+            <div class="text-center mt-3">
+              <a href="/login" class="btn btn-outline-primary btn-sm">Login to Book This Listing</a>
+            </div>
           <% } else if (isOwner) { %>
-            <div class="d-flex justify-content-center mt-3 gap-3">
-              <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark">Edit</a>
+            <div class="d-flex justify-content-center mt-3 gap-2">
+              <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark btn-sm">Edit</a>
               <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" style="display: inline;">
-                <button class="btn btn-dark">Delete</button>
+                <button class="btn btn-dark btn-sm">Delete</button>
               </form>
             </div>
           <% } else if (hasBooked) { %>
-            <div class="text-center mt-4">
-              <p class="text-success fw-semibold">You’ve already booked this listing.</p>
+            <div class="text-center mt-3">
+              <p class="text-success fw-semibold small mb-0">You've already booked this listing.</p>
             </div>
           <% } else { %>
-            <div class="text-center mt-4">
-              <p><strong>Ready to book this amazing place?</strong></p>
+            <div class="text-center mt-3">
+              <p class="small mb-2"><strong>Ready to book this amazing place?</strong></p>
               <form id="paymentForm">
                 <input type="hidden" name="amount" value="<%= listing.price %>">
-                <button type="button" class="btn btn-success btn-lg" id="rzp-button">
+                <button type="button" class="btn btn-success btn-sm" id="rzp-button">
                   Book Now - Pay ₹<%= listing.price.toLocaleString("en-IN") %>
                 </button>
               </form>
@@ -73,7 +113,7 @@
 
   <!-- Review Section (Below listing) -->
   <div class="row justify-content-center mt-5">
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-8 col-lg-6 px-3 px-md-4">
       <% if (currUser) { %>
         <hr />
         <h4 class="mb-4 text-center">Leave a Review</h4>
@@ -107,12 +147,12 @@
         <div class="row justify-content-center">
           <p class="text-center"><b>All Reviews</b></p>
           <% for (let review of listing.reviews) { %>
-            <div class="card review-card col-10 col-md-11 mx-auto my-2">
+            <div class="card review-card col-12 mx-auto my-2">
               <div class="card-body">
                 <h5 class="card-title"><%= review.author.username %></h5>
                 <p class="card-text"><%= review.comment %></p>
                 <fieldset class="starability-result" data-rating="<%= review.rating %>"></fieldset>
-                <% if (currUser && (currUser._id.toString() === review.author._id.toString() || isOwner)) { %>
+                <% if (currUser && currUser._id.toString() === review.author._id.toString()) { %>
                   <form method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
                     <button class="btn btn-sm btn-dark">Delete</button>
                   </form>
@@ -122,17 +162,17 @@
           <% } %>
         </div>
       <% } else { %>
-        <p class="no-reviews-message text-muted">No reviews yet — be the first to review</p>
+        <p class="no-reviews-message text-muted text-center">No reviews yet — be the first to review</p>
       <% } %>
     </div>
   </div>
 
   <!-- Map Section -->
   <div class="row justify-content-center mt-5">
-    <div class="col-12 text-center mb-4">
+    <div class="col-12 text-center mb-4 px-3">
       <h3>Where You Will Be</h3>
     </div>
-    <div class="col-12 col-md-10">
+    <div class="col-12 col-lg-10 px-3 px-md-4">
       <div class="map-wrapper mb-5">
         <div id="map"></div>
       </div>

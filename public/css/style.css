@@ -968,6 +968,8 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    
+    
 }
 
 .container {
@@ -1060,20 +1062,24 @@ body {
     margin-bottom: 0.5rem;
 }
 
-#map {
-    width: 100%;
-    max-width: 900px;
-    height: 400px;
-    margin: 0 auto;
+#map {     
+    width: 100%;     
+    max-width: 900px;     
+    height: 400px;     
+    margin: 0 auto;     
     border-radius: 8px;
-}
-
-.map-section {
-    margin-bottom: 4rem;
-    padding: 2rem 0;
+    display: block;
+    transform: translateX(12.5%);
+ }  
+ 
+ .map-section {     
+    margin-bottom: 4rem;     
+    padding: 2rem 0;     
     background-color: #f8f9fa;
-}
-
+    display: flex;
+    justify-content: center;
+    align-items: center;
+ }
 
 /* Smooth transition */
 body {
@@ -1890,3 +1896,4 @@ body.dark-mode .no-reviews-message {
         font-size: 13px;
     }
 }
+

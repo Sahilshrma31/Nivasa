@@ -92,6 +92,14 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+app.use((req, res, next) => {
+  res.locals.currUser = req.user; // or req.session.user if you store it differently
+  next();
+});
+
+
+
+
 // Global middleware to expose flash messages and current user in all templates
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
