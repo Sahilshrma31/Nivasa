@@ -11,7 +11,7 @@ const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
 const geocodingClient = mbxGeocoding({ accessToken: process.env.MAP_TOKEN });
 
 
-const MONGO_URL = "mongodb://127.0.0.1:27017/Nivasa";
+const MONGO_URL = process.env.ATLASDB_URL;
 
 main()
   .then(() => {

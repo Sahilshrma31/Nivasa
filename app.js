@@ -12,6 +12,7 @@ const ejsMate = require("ejs-mate");
 const wrapAsync = require("./utils/wrapAsync.js");
 const reviewRouter = require("./routes/review.js");
 const session = require("express-session");
+const MongoStore = require('connect-mongo');
 const listingRouter = require("./routes/listing.js");
 const flash = require("connect-flash");
 const passport = require("passport");
@@ -25,7 +26,10 @@ const bookingRoutes = require("./routes/booking");
 const {generateSmartDescription}=require("./utils/aiDescriptionHelper");
 
 // MongoDB connection
-const MONGO_URL = "mongodb://127.0.0.1:27017/Nivasa";
+// const MONGO_URL = "mongodb://127.0.0.1:27017/Nivasa";
+
+const dbUrl=process.env.ATLASDB_URL;
+
 main()
   .then(() => {
     console.log("connected to db");
@@ -35,8 +39,20 @@ main()
   });
 
 async function main() {
-  await mongoose.connect(MONGO_URL);
+  await mongoose.connect(dbUrl);
 }
+
+const store=MongoStore.create({
+  mongoUrl:dbUrl,
+  crypto:{
+    secret:process.env.SECRET,
+  },
+  touchAfter:24*3600,
+})
+
+store.on("error",()=>{
+  console.log("Error in MONGO SESSION STORE",error);
+})
 
 // View engine and middlewares
 app.set("view engine", "ejs");
@@ -49,7 +65,8 @@ app.use(express.static(path.join(__dirname, "/public")));
 
 // Session configuration
 const sessionoptions = {
-  secret: "mysupersecretcode",
+  store,
+  secret: process.env.SECRET,
   resave: false,
   saveUninitialized: true,
   cookie: {

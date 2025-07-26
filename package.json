@@ -1,4 +1,6 @@
-{
+{"engines": {
+  "node":"22.8.0"
+},
   "name": "nivasa",
   "version": "1.0.0",
   "main": "index.js",
@@ -15,6 +17,7 @@
     "axios": "^1.10.0",
     "cloudinary": "^1.41.3",
     "connect-flash": "^0.1.1",
+    "connect-mongo": "^5.1.0",
     "dotenv": "^17.2.0",
     "ejs": "^3.1.10",
     "ejs-mate": "^4.0.0",
