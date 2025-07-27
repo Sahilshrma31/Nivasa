@@ -210,9 +210,11 @@ Live Demo: https://nivasa.onrender.com
 
 
 
-## 👥 Author
+## 👨‍💻 Author
 
-- **Sahil Sharma**  - [YourGitHub](https://github.com/sahilshrma31)
+**Sahil Sharma**  
+Connect with me on [LinkedIn](https://linkedin.com/in/sahil-sharma-95512628a)
+
 
 ## 🙏 Acknowledgments
 
