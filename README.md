@@ -189,7 +189,6 @@ nivasa/
 
 ## 🚀 Deployment
 The project is deployed on Render for easy and reliable hosting.
-It automatically builds and redeploys from the GitHub repo on every push.
 
 Backend: Node.js server hosted on Render
 
@@ -213,7 +212,7 @@ Live Demo: https://nivasa.onrender.com
 
 ## 👥 Author
 
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/sahilshrma31)
+- **Sahil Sharma**  - [YourGitHub](https://github.com/sahilshrma31)
 
 ## 🙏 Acknowledgments
 
