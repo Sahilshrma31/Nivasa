@@ -90,7 +90,7 @@ Nivasa is a comprehensive rental platform that enables users to discover, book, 
 3. **Environment Setup**
    Create a `.env` file in the root directory:
    ```env
-   PORT=3000
+   PORT=8080
    MONGODB_URI=mongodb://localhost:27017/nivasa
    SESSION_SECRET=your-session-secret
    
