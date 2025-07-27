@@ -1,92 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nivasa</title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat&family=Plus+Jakarta+Sans&display=swap" rel="stylesheet">
-    <link href="/css/rating.css" rel="stylesheet">
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet">
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
-    
-    <style>
-        html {
-            zoom: 80%;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nivasa</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat&family=Plus+Jakarta+Sans&display=swap" rel="stylesheet">
+  <link href="/css/rating.css" rel="stylesheet">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.5.1/mapbox-gl.js"></script>
+
+  <style>
+    html {
+      zoom: 80%;
+    }
+  </style>
 </head>
 
 <body>
-    <div class="main-wrapper">
-        <!-- 🌙 Dark Mode Toggle Button -->
-        <button id="toggleDarkMode"
-          style="position: fixed; top: 100px; right: 30px; z-index: 9999;
-                 background-color: #f8f9fa; color: #000;
-                 border: none; padding: 10px 14px;
-                 border-radius: 50px;
-                 box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-                 cursor: pointer;
-                 font-size: 18px;">
-          🌙
-        </button>
+  <!-- ✅ FLEX LAYOUT WRAPPER FOR STICKY FOOTER -->
+  <div class="layout-wrapper">
 
-        <!-- Navbar -->
-        <%- include('../includes/navbar.ejs') %>
+    <!-- 🌙 Dark Mode Toggle Button -->
+    <button id="toggleDarkMode"
+      style="position: fixed; top: 100px; right: 30px; z-index: 9999;
+             background-color: #f8f9fa; color: #000;
+             border: none; padding: 10px 14px;
+             border-radius: 50px;
+             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+             cursor: pointer;
+             font-size: 18px;">
+      🌙
+    </button>
 
-        <!-- Page Container -->
-        <div class="container">
-            <%- include('../includes/flash.ejs') %>
-            <%- body %>
-        </div>
+    <!-- Navbar -->
+    <%- include('../includes/navbar.ejs') %>
 
-        <!-- Footer -->
-        <%- include('../includes/footer.ejs') %>
-    </div>
+    <!-- Main Content Area -->
+    <main class="flex-grow-container">
+      <div class="container">
+        <%- include('../includes/flash.ejs') %>
+        <%- body %>
+      </div>
+    </main>
 
-    <!-- JS Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-    <script src="/js/script.js"></script>
+    <!-- Footer -->
+    <%- include('../includes/footer.ejs') %>
 
-    <!-- Form Validation -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const forms = document.querySelectorAll(".needs-validation");
-            Array.from(forms).forEach(function (form) {
-                form.addEventListener("submit", function (event) {
-                    if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    form.classList.add("was-validated");
-                }, false);
-            });
-        });
-    </script>
+  </div>
 
-    <!-- ✅ Dark Mode Persistence Script -->
-    <script>
-        const toggleBtn = document.getElementById("toggleDarkMode");
+  <!-- JS Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+  <script src="/js/script.js"></script>
 
-        function applyTheme() {
-            const savedTheme = localStorage.getItem("theme");
-            const isDark = savedTheme === "dark";
-            document.body.classList.toggle("dark-mode", isDark);
-            toggleBtn.textContent = isDark ? "☀️" : "🌙";
-        }
+  <!-- Form Validation -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const forms = document.querySelectorAll(".needs-validation");
+      Array.from(forms).forEach(function (form) {
+        form.addEventListener("submit", function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add("was-validated");
+        }, false);
+      });
+    });
+  </script>
 
-        toggleBtn.addEventListener("click", () => {
-            const isDark = document.body.classList.toggle("dark-mode");
-            localStorage.setItem("theme", isDark ? "dark" : "light");
-            toggleBtn.textContent = isDark ? "☀️" : "🌙";
-        });
+  <!-- ✅ Dark Mode Persistence Script -->
+  <script>
+    const toggleBtn = document.getElementById("toggleDarkMode");
 
-        document.addEventListener("DOMContentLoaded", applyTheme);
-        applyTheme();
-    </script>
+    function applyTheme() {
+      const savedTheme = localStorage.getItem("theme");
+      const isDark = savedTheme === "dark";
+      document.body.classList.toggle("dark-mode", isDark);
+      toggleBtn.textContent = isDark ? "☀️" : "🌙";
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      const isDark = document.body.classList.toggle("dark-mode");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      toggleBtn.textContent = isDark ? "☀️" : "🌙";
+    });
+
+    document.addEventListener("DOMContentLoaded", applyTheme);
+    applyTheme();
+  </script>
 </body>
 </html>
