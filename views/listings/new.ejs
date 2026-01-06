@@ -65,41 +65,82 @@
   </div>
 </div>
 
-<script>
-  // AI Description Generation Handler
-  document.getElementById("generateBtn").addEventListener("click", async () => {
-    const title = document.getElementById("title").value;
-    const location = document.getElementById("location").value;
-    const price = document.getElementById("price").value;
+<!-- AI Status Toast -->
+<div id="ai-toast" class="ai-toast hidden">
+  <div class="ai-toast-icon">⚡</div>
+  <div class="ai-toast-body">
+    <div class="ai-toast-title">AI limit reached</div>
+    <div class="ai-toast-message">
+      This application has reached its daily AI usage limit. Please try again later.
+    </div>
+  </div>
+</div>
 
-    if (!title || !location || !price) {
-      alert("Please fill title, location, and price to generate a description.");
+
+<script>
+  const generateBtn = document.getElementById("generateBtn");
+  const btnText = generateBtn.querySelector(".ai-generate-btn__text");
+  const descriptionField = document.getElementById("description");
+  const toast = document.getElementById("ai-toast");
+
+  function showAiToast() {
+    toast.classList.remove("hidden");
+    toast.classList.add("show");
+
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.classList.add("hidden"), 300);
+    }, 5000);
+  }
+
+  generateBtn.addEventListener("click", async () => {
+    const title = document.getElementById("title").value.trim();
+    const location = document.getElementById("location").value.trim();
+    const country = document.getElementById("country").value.trim();
+    const price = document.getElementById("price").value.trim();
+
+    if (!title || !location || !country || !price) {
+      // keep this simple validation inline
       return;
     }
+
+    //  Disable button + show loading
+    generateBtn.disabled = true;
+    btnText.innerText = "Generating AI description...";
+    descriptionField.value = "Generating description, please wait...";
 
     try {
       const res = await fetch("/listings/generate-description", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ title, location, price })
+        body: JSON.stringify({ title, location, country, price }),
       });
 
       const data = await res.json();
 
-      if (data.description) {
-        document.getElementById("description").value = data.description;
+      if (data.success) {
+        descriptionField.value = data.description;
+      } else if (data.reason === "QUOTA_EXCEEDED") {
+        descriptionField.value = "";
+        showAiToast(); 
       } else {
-        alert("Failed to generate description. Please try again.");
+        descriptionField.value = "";
       }
     } catch (err) {
       console.error(err);
-      alert("Error generating description.");
+      descriptionField.value = "";
+    } finally {
+      //  Cooldown to avoid quota abuse
+      setTimeout(() => {
+        generateBtn.disabled = false;
+        btnText.innerText = "Generate AI-Based Description For Your Listing";
+      }, 6000);
     }
   });
 
-  // Bootstrap validation script
+  // Bootstrap validation
   (function () {
     'use strict';
     const forms = document.querySelectorAll('.needs-validation');

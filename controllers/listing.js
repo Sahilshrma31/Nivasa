@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
-require('dotenv').config();
+
 
 
 const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
@@ -45,13 +45,15 @@ module.exports.createListing = async (req, res) => {
     const listingData = req.body.listing;
 
     // Generate smart description if not provided
-    if (!listingData.description || listingData.description.trim() === "") {
-      listingData.description = await generateSmartDescription(
-        listingData.title,
-        listingData.location,
-        listingData.price
-      );
-    }
+if (!listingData.description || listingData.description.trim() === "") {
+  listingData.description = await generateSmartDescription(
+    listingData.title,
+    listingData.location,
+    listingData.country,
+    listingData.price
+  );
+}
+
 
     // Handle image upload (if file exists)
     if (req.file) {

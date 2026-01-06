@@ -1939,4 +1939,49 @@ html, body {
     padding: 20px;
     text-align: center;
   }
+
+  .ai-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  max-width: 360px;
+  background: #1f2937; /* dark slate */
+  color: #f9fafb;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  gap: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.ai-toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ai-toast.hidden {
+  display: none;
+}
+
+.ai-toast-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ai-toast-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.ai-toast-message {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #d1d5db;
+}
+
   

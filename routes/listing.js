@@ -39,17 +39,36 @@ router.get("/search", wrapAsync(listingController.searchListings));
 router.get("/:id/edit", isLoggedIn, isOwner, wrapAsync(listingController.renderEditForm));
 
 router.post("/generate-description", wrapAsync(async (req, res) => {
-  const { title, location, price } = req.body;
+  const { title, location, country, price } = req.body;
 
-  if (!title || !location || !price) {
-    return res.status(400).json({ error: "Missing data for description generation" });
+  if (!title || !location || !country || !price) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing data for description generation"
+    });
   }
 
-  // Use Gemini API to generate dynamic description
-  const description = await generateSmartDescription(title, location, price);
+  const result = await generateSmartDescription(
+    title,
+    location,
+    country,
+    price
+  );
 
-  res.json({ description });
+  // Forward quota error clearly
+  if (!result.success && result.reason === "QUOTA_EXCEEDED") {
+    return res.status(429).json(result);
+  }
+
+  // Other failures
+  if (!result.success) {
+    return res.status(500).json(result);
+  }
+
+  // Success
+  res.json(result);
 }));
+
 
 
 
