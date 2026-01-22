@@ -1,6 +1,8 @@
 const Listing = require("../models/listing");
 const Review = require("../models/review");
 const mongoose = require('mongoose');
+const redis = require("../config/redis");
+
 
 // Create and add a new review to a listing
 module.exports.createReview = async (req, res) => {
@@ -11,17 +13,39 @@ module.exports.createReview = async (req, res) => {
     await newReview.save();
     await listing.save();
 
-    req.flash("success", "Review added successfully.");
-    res.redirect(`/listings/${listing._id}`);
+// CLEAR REDIS CACHE
+    if (redis) {
+     await redis.del(`listing:${listing._id}`);
+        }
+
+        req.flash("success", "Review added successfully.");
+        res.redirect(`/listings/${listing._id}`);
+
 };
 
 // Delete a review from a listing
 module.exports.destroyReview = async (req, res) => {
-    let { id, reviewId } = req.params;
+    const { id, reviewId } = req.params;
 
-    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
-    await Review.findByIdAndDelete(reviewId);
+    const review = await Review.findById(reviewId);
+    if (!review) {
+        req.flash("error", "Review not found");
+        return res.redirect(`/listings/${id}`);
+    }
+
+    await Listing.findByIdAndUpdate(id, {
+        $pull: { reviews: reviewId }
+    });
+
+   await Review.findByIdAndDelete(reviewId);
+
+//  CLEAR REDIS CACHE
+    if (redis) {
+     await redis.del(`listing:${id}`);
+    }
 
     req.flash("success", "Review deleted successfully.");
     res.redirect(`/listings/${id}`);
-};
+
+    };
+

@@ -16,11 +16,12 @@ const reviewController=require("../controllers/review");
 // reviews route
 // post review request
 router.post(
-    "/",
-    validatereview,
-    isLoggedIn,
-    wrapAsync(reviewController.createReview)
+  "/",
+  isLoggedIn,
+  validatereview,
+  wrapAsync(reviewController.createReview)
 );
+
 
 // delete review route
 // DELETE route to delete a review from a listing
