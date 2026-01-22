@@ -7,19 +7,28 @@
 
 
 
-  <!--  Active Filters Display -->
-  <% if (query || minPrice || maxPrice || sort) { %>
-    <div class="mb-4 px-3 py-2 border rounded filter-box" style="font-size: 1rem;">
-      <strong>Showing results for:</strong>
-      <% const filters = []; %>
-      <% if (query) { filters.push(`Keyword: "${query}"`); } %>
-      <% if (minPrice) { filters.push(`Min Price: ₹${minPrice}`); } %>
-      <% if (maxPrice) { filters.push(`Max Price: ₹${maxPrice}`); } %>
-      <% if (sort === 'asc') { filters.push("Sorted by: Price Low to High"); } %>
-      <% if (sort === 'desc') { filters.push("Sorted by: Price High to Low"); } %>
-      <span><%= filters.join(", ") %></span>
-    </div>
-  <% } %>
+ <!--  Active Filters Display -->
+<% if (query || minPrice || maxPrice || sort) { %>
+  <div class="mb-4 px-3 py-2 border rounded filter-box" style="font-size: 1rem;">
+    <strong>Showing results for:</strong>
+    <% const filters = []; %>
+
+    <% if (query) { filters.push(`Keyword: "${query}"`); } %>
+    <% if (minPrice) { filters.push(`Min Price: ₹${minPrice}`); } %>
+    <% if (maxPrice) { filters.push(`Max Price: ₹${maxPrice}`); } %>
+
+    <% if (sort === 'priceLowToHigh') { %>
+      <% filters.push("Sorted by: Price Low to High"); %>
+    <% } %>
+
+    <% if (sort === 'priceHighToLow') { %>
+      <% filters.push("Sorted by: Price High to Low"); %>
+    <% } %>
+
+    <span><%= filters.join(", ") %></span>
+  </div>
+<% } %>
+
 
   <!--  Listings Display -->
   <% if (allListings && allListings.length === 0) { %>

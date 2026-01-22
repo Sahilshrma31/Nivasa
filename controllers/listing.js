@@ -12,22 +12,54 @@ module.exports.index = async (req, res) => {
   const startTime = Date.now();
 
   try {
-    const CACHE_KEY = "listings:all";
-    let allListings = null;
+    const { search, minPrice, maxPrice, sort } = req.query;
 
-    // Try cache
-    if (redis) {
-      const cachedListings = await redis.get(CACHE_KEY);
-      if (cachedListings) {
-        allListings = JSON.parse(cachedListings);
+    const hasQuery =
+      search || minPrice || maxPrice || sort;
+
+    let allListings;
+
+    // CASE 1: SEARCH / SORT / FILTER → ALWAYS DB
+    if (hasQuery) {
+      let query = {};
+
+      if (search) {
+        query.title = { $regex: search, $options: "i" };
       }
+
+      if (minPrice || maxPrice) {
+        query.price = {};
+        if (minPrice) query.price.$gte = Number(minPrice);
+        if (maxPrice) query.price.$lte = Number(maxPrice);
+      }
+
+      let dbQuery = Listing.find(query);
+
+      if (sort === "priceLowToHigh") {
+        dbQuery = dbQuery.sort({ price: 1 });
+      } else if (sort === "priceHighToLow") {
+        dbQuery = dbQuery.sort({ price: -1 });
+      }
+
+      allListings = await dbQuery;
     }
 
-    // Fallback to database
-    if (!allListings) {
-      allListings = await Listing.find({});
+    //CASE 2: SIMPLE LISTING PAGE → REDIS
+    else {
+      const CACHE_KEY = "listings:all";
+
       if (redis) {
-        await redis.set(CACHE_KEY, JSON.stringify(allListings), "EX", 60);
+        const cachedListings = await redis.get(CACHE_KEY);
+        if (cachedListings) {
+          allListings = JSON.parse(cachedListings);
+        }
+      }
+
+      if (!allListings) {
+        allListings = await Listing.find({});
+        if (redis) {
+          await redis.set(CACHE_KEY, JSON.stringify(allListings), "EX", 60);
+        }
       }
     }
 
@@ -40,13 +72,65 @@ module.exports.index = async (req, res) => {
       allListings,
       bookedListings,
       currentUser: req.user,
-      query: "",
-      minPrice: "",
-      maxPrice: "",
-      sort: ""
+      query: search || "",
+      minPrice: minPrice || "",
+      maxPrice: maxPrice || "",
+      sort: sort || ""
     });
   } finally {
     console.log("Listings response time:", Date.now() - startTime, "ms");
+  }
+};
+
+/* Search listings */
+module.exports.searchListings = async (req, res) => {
+  try {
+    const { q, minPrice, maxPrice, sort } = req.query;
+    
+    let query = {};
+
+    // Search by title
+    if (q) {
+      query.title = { $regex: q, $options: "i" };
+    }
+
+    // Price filters
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+
+    let dbQuery = Listing.find(query);
+
+    // Sorting
+    if (sort === "priceLowToHigh") {
+      dbQuery = dbQuery.sort({ price: 1 });
+    } else if (sort === "priceHighToLow") {
+      dbQuery = dbQuery.sort({ price: -1 });
+    }
+
+    const allListings = await dbQuery;
+
+    // Get booked listings if user is logged in
+    let bookedListings = [];
+    if (req.user) {
+      bookedListings = await Booking.find({ user: req.user._id }).populate("listing");
+    }
+
+    res.render("listings/index.ejs", {
+      allListings,
+      bookedListings,
+      currentUser: req.user,
+      query: q || "",
+      minPrice: minPrice || "",
+      maxPrice: maxPrice || "",
+      sort: sort || ""
+    });
+  } catch (err) {
+    console.error("Search error:", err);
+    req.flash("error", "Search failed. Please try again.");
+    res.redirect("/listings");
   }
 };
 

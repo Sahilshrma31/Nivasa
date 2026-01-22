@@ -23,7 +23,7 @@ router.post(
 );
 
 
-// delete review route
+
 // DELETE route to delete a review from a listing
 router.delete(
     "/:reviewId", // Route for deleting a review
