@@ -1,67 +1,65 @@
 const Listing = require("../models/listing");
-const Booking = require("../models/booking"); 
-const mongoose = require("mongoose");
+const Booking = require("../models/booking");
 const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
-const mapToken = process.env.MAP_TOKEN;
-const geocodingClient = mbxGeocoding({ accessToken: mapToken });
-const redis=require("../config/redis");
-
-
-
-
+const redis = require("../config/redis");
 const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
 
+const mapToken = process.env.MAP_TOKEN;
+const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
-//Show all listings with Redis caching
+/* Show all listings */
 module.exports.index = async (req, res) => {
-  const CACHE_KEY = "listings:all";
+  const startTime = Date.now();
 
-  // Try to read listings from Redis cache first
-  const cachedListings = await redis.get(CACHE_KEY);
+  try {
+    const CACHE_KEY = "listings:all";
+    let allListings = null;
 
-  let allListings;
+    // Try cache
+    if (redis) {
+      const cachedListings = await redis.get(CACHE_KEY);
+      if (cachedListings) {
+        allListings = JSON.parse(cachedListings);
+      }
+    }
 
-  if (cachedListings) {
-    // Cache hit: parse cached JSON data
-    allListings = JSON.parse(cachedListings);
-    console.log("Listings served from Redis cache");
-  } else {
-    // Cache miss: fetch data from MongoDB
-    allListings = await Listing.find({});
-    console.log("Listings fetched from MongoDB");
+    // Fallback to database
+    if (!allListings) {
+      allListings = await Listing.find({});
+      if (redis) {
+        await redis.set(CACHE_KEY, JSON.stringify(allListings), "EX", 60);
+      }
+    }
 
-    // Store the fetched data in Redis with a TTL of 60 seconds
-    await redis.set(CACHE_KEY, JSON.stringify(allListings), "EX", 60);
+    let bookedListings = [];
+    if (req.user) {
+      bookedListings = await Booking.find({ user: req.user._id }).populate("listing");
+    }
+
+    res.render("listings/index.ejs", {
+      allListings,
+      bookedListings,
+      currentUser: req.user,
+      query: "",
+      minPrice: "",
+      maxPrice: "",
+      sort: ""
+    });
+  } finally {
+    console.log("Listings response time:", Date.now() - startTime, "ms");
   }
-
-  // User-specific booking data should never be cached
-  let bookedListings = [];
-  if (req.user) {
-    bookedListings = await Booking.find({ user: req.user._id }).populate("listing");
-  }
-
-  res.render("listings/index.ejs", {
-    allListings,
-    bookedListings,
-    currentUser: req.user,
-    query: "",
-    minPrice: "",
-    maxPrice: "",
-    sort: ""
-  });
 };
 
-// Render form for new listing
+/* Render new listing form */
 module.exports.renderNewForm = async (req, res) => {
   res.render("listings/new.ejs");
 };
 
-// Create a new listing with Gemini-powered description and cached geocoding
+/* Create new listing */
 module.exports.createListing = async (req, res) => {
   try {
     const listingData = req.body.listing;
 
-    // Generate smart description if not provided
     if (!listingData.description || listingData.description.trim() === "") {
       listingData.description = await generateSmartDescription(
         listingData.title,
@@ -71,7 +69,6 @@ module.exports.createListing = async (req, res) => {
       );
     }
 
-    // Handle image upload (if file exists)
     if (req.file) {
       listingData.image = {
         url: req.file.path,
@@ -79,209 +76,164 @@ module.exports.createListing = async (req, res) => {
       };
     }
 
-    // GEO CODING WITH REDIS CACHE
     const location = listingData.location;
     const GEO_CACHE_KEY = `geo:${location.toLowerCase()}`;
+    let geoData = null;
 
-    // Declare geoData ONCE
-    let geoData = await redis.get(GEO_CACHE_KEY);
+    // Try geocoding cache
+    if (redis) {
+      const cachedGeo = await redis.get(GEO_CACHE_KEY);
+      if (cachedGeo) {
+        geoData = JSON.parse(cachedGeo);
+      }
+    }
 
-    if (geoData) {
-      // Cache hit
-      geoData = JSON.parse(geoData);
-      console.log("Geocoding data served from Redis cache");
-    } else {
-      // Cache miss: call Mapbox
-      const geoResponse = await geocodingClient.forwardGeocode({
-        query: location,
-        limit: 1
-      }).send();
+    // Fallback to Mapbox
+    if (!geoData) {
+      const geoResponse = await geocodingClient
+        .forwardGeocode({ query: location, limit: 1 })
+        .send();
 
       geoData = geoResponse.body.features[0];
 
       if (!geoData) {
-        req.flash("error", "Invalid location. Please enter a valid location.");
+        req.flash("error", "Invalid location.");
         return res.redirect("/listings/new");
       }
 
-      // Cache geocoding result for 24 hours
-      await redis.set(GEO_CACHE_KEY, JSON.stringify(geoData), "EX", 86400);
-      console.log("Geocoding data fetched from Mapbox and cached");
+      if (redis) {
+        await redis.set(GEO_CACHE_KEY, JSON.stringify(geoData), "EX", 86400);
+      }
     }
-    //  END GEO CODING
 
     const newListing = new Listing(listingData);
     newListing.owner = req.user._id;
     newListing.geometry = geoData.geometry;
-
     await newListing.save();
 
-    // Invalidate listings cache after creating a new listing
-    await redis.del("listings:all");
+    if (redis) {
+      await redis.del("listings:all");
+    }
 
     req.flash("success", "New listing created successfully.");
     res.redirect("/listings");
   } catch (err) {
-    console.error("Error creating listing:", err);
-    req.flash("error", "Something went wrong while creating the listing.");
+    console.error(err);
+    req.flash("error", "Something went wrong.");
     res.redirect("/listings/new");
   }
 };
 
-
-// Render edit form
+/* Render edit form */
 module.exports.renderEditForm = async (req, res) => {
   const { id } = req.params;
   const listing = await Listing.findById(id);
+
   if (!listing) {
-    req.flash("error", "Listing you requested for does not exist");
+    req.flash("error", "Listing not found.");
     return res.redirect("/listings");
   }
 
-  let originalImageUrl = listing.image.url;
-  originalImageUrl = originalImageUrl.replace("/upload", "/upload/w_250");
+  let originalImageUrl = listing.image.url.replace("/upload", "/upload/w_250");
 
   res.render("listings/edit.ejs", { listing, originalImageUrl });
 };
 
-// Update listing
+/* Update listing */
 module.exports.updateListing = async (req, res) => {
-  let { id } = req.params;
+  const { id } = req.params;
+
   let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
 
-  if (typeof req.file !== "undefined") {
-    let url = req.file.path;
-    let filename = req.file.filename;
-    listing.image = { url, filename };
+  if (req.file) {
+    listing.image = {
+      url: req.file.path,
+      filename: req.file.filename
+    };
     await listing.save();
   }
 
-  // Invalidate listings cache after updating a listing
+  if (redis) {
     await redis.del("listings:all");
+    await redis.del(`listing:${id}`);
+  }
 
-
-  req.flash("success", "Listing Updated!");
+  req.flash("success", "Listing updated.");
   res.redirect(`/listings/${id}`);
 };
 
-// Search listings with filters and booked data
-module.exports.searchListings = async (req, res) => {
-  const { q, minPrice, maxPrice, sort } = req.query;
-
-  let filter = {};
-
-  // Keyword filtering
-  if (q) {
-    filter.$or = [
-      { title: { $regex: q, $options: "i" } },
-      { description: { $regex: q, $options: "i" } },
-      { location: { $regex: q, $options: "i" } },
-    ];
-  }
-
-  // Price filtering
-  if (minPrice || maxPrice) {
-    filter.price = {};
-    if (minPrice) filter.price.$gte = parseInt(minPrice);
-    if (maxPrice) filter.price.$lte = parseInt(maxPrice);
-  }
-
-  // Fetch listings based on filter
-  let queryObj = Listing.find(filter);
-
-  // Sorting logic
-  if (sort === "asc") queryObj = queryObj.sort({ price: 1 });
-  if (sort === "desc") queryObj = queryObj.sort({ price: -1 });
-
-  const allListings = await queryObj.exec();
-
-  let bookedListings = [];
-  if (req.user) {
-    bookedListings = await Booking.find({ user: req.user._id }).populate("listing");
-  }
-
-  res.render("listings/index", {
-    allListings,
-    bookedListings,
-    currentUser: req.user,
-    query: q || '',
-    minPrice: minPrice || '',
-    maxPrice: maxPrice || '',
-    sort: sort || ''
-  });
-};
-
-
-// Show a specific listing with Redis caching
+/* Show single listing */
 module.exports.showListing = async (req, res) => {
-  const listingId = req.params.id;
-  const CACHE_KEY = `listing:${listingId}`;
+  const startTime = Date.now();
 
-  // Try to get listing from Redis cache
-  const cachedListing = await redis.get(CACHE_KEY);
+  try {
+    const listingId = req.params.id;
+    const CACHE_KEY = `listing:${listingId}`;
+    let listing = null;
 
-  let listing;
-
-  if (cachedListing) {
-    // Cache hit: parse cached listing data
-    listing = JSON.parse(cachedListing);
-    console.log("Listing served from Redis cache");
-  } else {
-    // Cache miss: fetch listing from MongoDB
-    listing = await Listing.findById(listingId)
-      .populate({ path: "reviews", populate: { path: "author" } })
-      .populate("owner");
-
-    if (!listing) {
-      req.flash("error", "Listing not found");
-      return res.redirect("/listings");
+    // Try cache
+    if (redis) {
+      const cachedListing = await redis.get(CACHE_KEY);
+      if (cachedListing) {
+        listing = JSON.parse(cachedListing);
+      }
     }
 
-    console.log("Listing fetched from MongoDB");
+    // Fallback to database
+    if (!listing) {
+      listing = await Listing.findById(listingId)
+        .populate({ path: "reviews", populate: { path: "author" } })
+        .populate("owner");
 
-    // Store listing in Redis with TTL of 60 seconds
-    await redis.set(CACHE_KEY, JSON.stringify(listing), "EX", 60);
-  }
+      if (!listing) {
+        req.flash("error", "Listing not found.");
+        return res.redirect("/listings");
+      }
 
-  // User-specific logic (never cached)
-  const currUser = req.user;
-  let hasBooked = false;
+      if (redis) {
+        await redis.set(CACHE_KEY, JSON.stringify(listing), "EX", 60);
+      }
+    }
 
-  if (currUser) {
-    const booking = await Booking.findOne({
-      listing: listing._id,
-      user: currUser._id
+    const currUser = req.user;
+    let hasBooked = false;
+
+    if (currUser) {
+      const booking = await Booking.findOne({
+        listing: listing._id,
+        user: currUser._id
+      });
+      if (booking) hasBooked = true;
+    }
+
+    const isOwner =
+      currUser &&
+      listing.owner &&
+      currUser._id.toString() === listing.owner._id.toString();
+
+    res.render("listings/show", {
+      listing,
+      currUser,
+      isOwner,
+      hasBooked,
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID
     });
-    if (booking) hasBooked = true;
+  } finally {
+    console.log("Single listing response time:", Date.now() - startTime, "ms");
   }
-
-  const isOwner =
-    currUser &&
-    currUser._id &&
-    listing.owner &&
-    listing.owner._id &&
-    currUser._id.toString() === listing.owner._id.toString();
-
-  res.render("listings/show", {
-    listing,
-    currUser,
-    isOwner,
-    hasBooked,
-    razorpayKeyId: process.env.RAZORPAY_KEY_ID
-  });
 };
 
-
-
-
-
-// Delete listing
+/* Delete listing */
 module.exports.destroyListing = async (req, res) => {
-  await Listing.findByIdAndDelete(req.params.id);
+  const { id } = req.params;
 
-  // Invalidate listings cache
-  await redis.del("listings:all"); 
+  await Listing.findByIdAndDelete(id);
 
-  req.flash("success", "Listing deleted successfully.");
+  if (redis) {
+    await redis.del("listings:all");
+    await redis.del(`listing:${id}`);
+  }
+
+  req.flash("success", "Listing deleted.");
   res.redirect("/listings");
 };
