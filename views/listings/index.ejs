@@ -1,61 +1,101 @@
-<% layout("/layouts/boilerplate") -%> 
+<% layout("/layouts/boilerplate") -%>
+<%
+  // Guards: /listings and /listings/search pass different locals.
+  const q     = typeof query    !== "undefined" ? query    : "";
+  const minP  = typeof minPrice !== "undefined" ? minPrice : "";
+  const maxP  = typeof maxPrice !== "undefined" ? maxPrice : "";
+  const srt   = typeof sort     !== "undefined" ? sort     : "";
+  const hero  = (allListings && allListings.length && allListings[0].image && allListings[0].image.url)
+                  ? allListings[0].image.url : null;
+%>
 
-<body>
-  <h2 class="mb-4 text-center fw-bold border-bottom pb-2" style="font-size: 1.8rem;">
-    All Nivasas <span style="color: #666;">— Explore Rentals</span>
-  </h2>
+<div class="n-wide">
 
+  <!-- Hero. Path A (gradient) always paints; path B (the <img>) only renders
+       when there is art to show, so this can never look broken. -->
+  <section class="n-matte n-matte--haldi n-matte--lead n-matte--centered" data-parallax>
+    <% if (hero) { %>
+      <img class="n-matte__media" src="<%= hero %>" alt="" aria-hidden="true">
+    <% } %>
+    <div class="n-matte__body">
+      <p class="n-label n-on-wash-2">Stays across India</p>
+      <h1 class="n-display-xl n-on-wash">Every Nivasa,<br>One Place</h1>
+    </div>
+  </section>
 
+  <!-- Filter row. Search and price live here now, not in the nav. -->
+  <section class="n-section" data-reveal-group>
 
- <!--  Active Filters Display -->
-<% if (query || minPrice || maxPrice || sort) { %>
-  <div class="mb-4 px-3 py-2 border rounded filter-box" style="font-size: 1rem;">
-    <strong>Showing results for:</strong>
-    <% const filters = []; %>
+    <div class="n-pillbar n-reveal">
+      <span class="n-pillbar__indicator"></span>
+      <a class="n-pill <%= !srt ? 'is-active' : '' %>" href="/listings">All</a>
+      <a class="n-pill <%= srt === 'priceLowToHigh' ? 'is-active' : '' %>"
+         href="/listings?sort=priceLowToHigh<%= q ? '&search=' + encodeURIComponent(q) : '' %>">&#8377; Low &rarr; High</a>
+      <a class="n-pill <%= srt === 'priceHighToLow' ? 'is-active' : '' %>"
+         href="/listings?sort=priceHighToLow<%= q ? '&search=' + encodeURIComponent(q) : '' %>">&#8377; High &rarr; Low</a>
+    </div>
 
-    <% if (query) { filters.push(`Keyword: "${query}"`); } %>
-    <% if (minPrice) { filters.push(`Min Price: ₹${minPrice}`); } %>
-    <% if (maxPrice) { filters.push(`Max Price: ₹${maxPrice}`); } %>
+    <form class="n-reveal" action="/listings" method="GET"
+          style="display:grid; grid-template-columns:repeat(auto-fit,minmax(9rem,1fr)); gap:1.5rem; align-items:end; max-width:56rem; margin-inline:auto; width:100%;">
+      <div class="n-field">
+        <label class="n-field__label" for="search">Search</label>
+        <input class="n-field__input" type="text" name="search" id="search"
+               placeholder="Search by title" value="<%= q %>">
+      </div>
+      <div class="n-field">
+        <label class="n-field__label" for="minPrice">Min &#8377;</label>
+        <input class="n-field__input" type="number" name="minPrice" id="minPrice"
+               placeholder="0" value="<%= minP %>">
+      </div>
+      <div class="n-field">
+        <label class="n-field__label" for="maxPrice">Max &#8377;</label>
+        <input class="n-field__input" type="number" name="maxPrice" id="maxPrice"
+               placeholder="Any" value="<%= maxP %>">
+      </div>
+      <input type="hidden" name="sort" value="<%= srt %>">
+      <button class="n-btn" type="submit">Search</button>
+    </form>
 
-    <% if (sort === 'priceLowToHigh') { %>
-      <% filters.push("Sorted by: Price Low to High"); %>
+    <% if (q || minP || maxP || srt) { %>
+      <p class="n-label n-reveal" style="text-align:center;">
+        <%
+          const bits = [];
+          if (q)    bits.push('Keyword: ' + q);
+          if (minP) bits.push('Min ₹' + minP);
+          if (maxP) bits.push('Max ₹' + maxP);
+          if (srt === 'priceLowToHigh') bits.push('Price low to high');
+          if (srt === 'priceHighToLow') bits.push('Price high to low');
+        %>
+        <%= bits.join("  ·  ") %>
+      </p>
     <% } %>
 
-    <% if (sort === 'priceHighToLow') { %>
-      <% filters.push("Sorted by: Price High to Low"); %>
-    <% } %>
+  </section>
 
-    <span><%= filters.join(", ") %></span>
-  </div>
-<% } %>
-
-
-  <!--  Listings Display -->
+  <!-- Grid -->
   <% if (allListings && allListings.length === 0) { %>
-    <div class="alert alert-warning text-center">No listings found for the selected criteria.</div>
+    <p class="n-body n-reveal" style="text-align:center; margin-inline:auto; padding-block:3rem;">
+      No listings match those filters. <a href="/listings">Clear them</a> and start again.
+    </p>
   <% } else if (allListings) { %>
-    <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 g-4 px-3">
-      <% for (let listing of allListings) { %>
-        <div class="col">
-          <a href="/listings/<%= listing._id %>" class="listing-link text-decoration-none text-dark">
-            <div class="card listing-card h-100 shadow-sm">
-              <img
-                src="<%= listing.image?.url || 'https://via.placeholder.com/400x300?text=No+Image' %>"
-                class="card-img-top"
-                alt="listing_image"
-                style="height: 20rem; object-fit: cover;"
-              >
-              <div class="card-body">
-                <p class="card-text">
-                  <b><%= listing.title %></b> <br>
-                  ₹<%= listing.price?.toLocaleString("en-IN") || 'N/A' %>/night
-                </p>
-              </div>
-            </div>
-          </a>
-        </div>
-      <% } %>
+    <div class="n-grid" data-reveal-group>
+      <% allListings.forEach(function (listing) { %>
+        <a class="n-card n-reveal" href="/listings/<%= listing._id %>">
+          <% if (listing.image && listing.image.url) { %>
+            <img class="n-card__media" src="<%= listing.image.url %>"
+                 alt="<%= listing.title %>" loading="lazy">
+          <% } %>
+          <div class="n-card__body">
+            <span class="n-card__title"><%= listing.title %></span>
+            <span class="n-card__meta">
+              <%= listing.location || listing.country || "India" %>
+              &nbsp;·&nbsp;
+              &#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : "N/A" %>
+            </span>
+          </div>
+        </a>
+      <% }); %>
     </div>
   <% } %>
-</body>
 
+</div>

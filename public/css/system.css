@@ -1,0 +1,1194 @@
+/* ==========================================================================
+   Nivasa — Matte System
+   Tokens, type scale, and layout primitives.
+
+   Load order: this file must come AFTER bootstrap.min.css and style.css
+   in boilerplate.ejs so its tokens win without !important.
+
+   Theming: dark is the brand default (:root). Light is an override on
+   [data-theme="light"]. An inline script in <head> stamps data-theme before
+   first paint, so there is no flash and the CSS never needs a media query.
+
+   The matted photograph is IDENTICAL in both themes — only the wall around
+   it changes from black to paper. That is the whole light-mode concept.
+   ========================================================================== */
+
+
+/* --------------------------------------------------------------------------
+   1. Tokens — dark (default)
+   -------------------------------------------------------------------------- */
+
+:root {
+    /* Ground. Warm-biased blacks, not neutral grey. */
+    --n-canvas:  #0A0807;
+    --n-surface: #14100E;
+    --n-raised:  #1E1815;
+
+    --n-line:   rgba(237, 231, 220, 0.10);
+    --n-line-2: rgba(237, 231, 220, 0.22);
+
+    /* Ink */
+    --n-ink:   #EDE7DC;
+    --n-ink-2: #9E958A;
+    --n-ink-3: #80776D;   /* 4.55:1 on canvas — was #6B635B at 3.39, below AA */
+
+    /* RGB triplets — Bootstrap composes .text-body / .text-muted from
+       *-rgb vars, so remapping only the hex leaves them the old grey. */
+    --n-ink-rgb:   237, 231, 220;
+    --n-ink-2-rgb: 158, 149, 138;
+
+    /* Accent — terracotta, the only one */
+    --n-accent:       #D9552F;
+    --n-accent-hover: #E8672F;
+    --n-accent-soft:  rgba(217, 85, 47, 0.16);
+
+    /* Floating nav glass */
+    --n-glass:      rgba(237, 231, 220, 0.08);
+    --n-glass-line: rgba(237, 231, 220, 0.14);
+    --n-glass-ink:  #EDE7DC;
+
+    --n-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+
+    color-scheme: dark;
+}
+
+/* --------------------------------------------------------------------------
+   2. Tokens — light
+   -------------------------------------------------------------------------- */
+
+:root[data-theme="light"] {
+    --n-canvas:  #F2EDE4;   /* warm paper, never pure white */
+    --n-surface: #FBF8F3;
+    --n-raised:  #E7E0D4;
+
+    --n-line:   rgba(23, 19, 16, 0.12);
+    --n-line-2: rgba(23, 19, 16, 0.24);
+
+    --n-ink:   #171310;
+    --n-ink-2: #5C5449;
+    --n-ink-3: #746A60;   /* 4.53:1 on canvas — was #7A7065 at 4.16 */
+
+    --n-ink-rgb:   23, 19, 16;
+    --n-ink-2-rgb: 92, 84, 73;
+
+    --n-accent:       #BE421E;   /* 4.52:1 on paper — was #C4441F at 4.29 */
+    --n-accent-hover: #D9552F;
+    --n-accent-soft:  rgba(190, 66, 30, 0.12);
+
+    --n-glass:      rgba(255, 253, 250, 0.72);
+    --n-glass-line: rgba(23, 19, 16, 0.10);
+    --n-glass-ink:  #171310;
+
+    --n-shadow: 0 24px 60px rgba(60, 45, 30, 0.16);
+
+    color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------
+   3. Theme-independent tokens
+   -------------------------------------------------------------------------- */
+
+:root {
+    /* Wash gradients — the no-photo fallback. Real photography renders in
+       its own colour; nothing tints it. Same in both themes. */
+    --n-wash-lo: var(--n-canvas);
+    --n-wash-hi: var(--n-raised);
+
+    /* Type */
+    --n-font-display: "Archivo", ui-sans-serif, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --n-font-body:    "Plus Jakarta Sans", ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --n-font-mono:    "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+    /* Archivo ships a real width axis (62-125): hero type goes condensed,
+       card type stays neutral. One family, two voices. */
+    --n-wdth-tight:   92;
+    --n-wdth-neutral: 100;
+
+    --n-size-display-xl: clamp(2.75rem, 7vw, 6rem);
+    --n-size-display-l:  clamp(2rem, 4vw, 3.25rem);
+    --n-size-display-m:  clamp(1.5rem, 2.5vw, 2rem);
+    --n-size-body:       1.0625rem;
+    --n-size-small:      0.9375rem;
+    --n-size-label:      0.75rem;
+
+    --n-measure: 65ch;
+
+    --n-s1: 0.25rem;
+    --n-s2: 0.5rem;
+    --n-s3: 0.75rem;
+    --n-s4: 1rem;
+    --n-s5: 1.5rem;
+    --n-s6: 2rem;
+    --n-s7: 3rem;
+    --n-s8: 4.5rem;
+
+    --n-matte-radius: 28px;
+    --n-matte-inset:  20px;
+    --n-card-radius:  16px;
+    --n-grid-gap:     12px;
+    --n-nav-h:        56px;
+
+    /* How far the hero image may drift. The media is oversized by this
+       amount on both edges and the JS clamps to it, so no gradient shows. */
+    --n-parallax-range: 90px;
+
+    --n-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+    --n-ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+    --n-dur-fast:    260ms;
+    --n-dur-mid:     380ms;
+    --n-dur-reveal:  600ms;
+    --n-dur-hero:    1400ms;
+    --n-stagger:     70ms;
+
+    /* Hand the ground to Bootstrap so its components inherit the canvas
+       instead of fighting it. Cheaper than overriding each one. */
+    --bs-body-bg:          var(--n-canvas);
+    --bs-body-color:       var(--n-ink);
+    --bs-body-color-rgb:   var(--n-ink-rgb);
+    --bs-border-color:     var(--n-line);
+    --bs-emphasis-color:   var(--n-ink);
+    --bs-emphasis-color-rgb: var(--n-ink-rgb);
+    --bs-secondary-color:  var(--n-ink-2);
+    --bs-secondary-color-rgb: var(--n-ink-2-rgb);
+    --bs-tertiary-bg:      var(--n-surface);
+    --bs-secondary-bg:     var(--n-raised);
+    --bs-card-bg:          var(--n-surface);
+    --bs-link-color:       var(--n-accent);
+    --bs-link-hover-color: var(--n-accent-hover);
+    --bs-heading-color:    var(--n-ink);
+}
+
+@media (max-width: 767.98px) {
+    :root {
+        --n-matte-radius: 20px;
+        --n-matte-inset:  12px;
+    }
+}
+
+
+/* --------------------------------------------------------------------------
+   4. Base
+   -------------------------------------------------------------------------- */
+
+body {
+    background-color: var(--n-canvas);
+    color: var(--n-ink);
+    font-family: var(--n-font-body);
+    font-size: var(--n-size-body);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color var(--n-dur-fast) ease,
+                color var(--n-dur-fast) ease;
+}
+
+::selection { background: var(--n-accent); color: #fff; }
+
+:focus-visible {
+    outline: 2px solid var(--n-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+/* Page shell. The boilerplate no longer wraps content in .container, so
+   the matte hero can sit full-bleed under the floating nav. */
+.n-main {
+    display: block;
+    min-height: 60vh;
+    padding-inline: var(--n-matte-inset);
+    padding-bottom: var(--n-s8);
+    /* Clearance for the fixed nav on pages that do NOT open with a hero. */
+    padding-top: calc(var(--n-nav-h) + var(--n-matte-inset) + var(--n-s4));
+}
+
+/* A hero matte cancels that clearance so the nav floats ON the image,
+   landing the matte exactly --n-matte-inset from the viewport top. */
+.n-matte--lead { margin-top: calc(-1 * (var(--n-nav-h) + var(--n-s4))); }
+
+.n-wide  { max-width: 96rem; margin-inline: auto; }
+.n-inner { max-width: 72rem; margin-inline: auto; }
+
+
+/* --------------------------------------------------------------------------
+   5. Floating nav — glass pill, inset from the top, sits ON the hero
+   -------------------------------------------------------------------------- */
+
+.n-nav {
+    position: fixed;
+    top: var(--n-matte-inset);
+    left: var(--n-matte-inset);
+    right: var(--n-matte-inset);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.n-nav__pill {
+    pointer-events: auto;
+    width: 100%;
+    max-width: 76rem;
+    min-height: var(--n-nav-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--n-s4);
+    padding: 0 var(--n-s5);
+    border-radius: 999px;
+    background: var(--n-glass);
+    border: 1px solid var(--n-glass-line);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    transition: background-color var(--n-dur-fast) ease;
+}
+
+.n-nav__brand {
+    font-family: var(--n-font-display);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--n-glass-ink);
+    text-decoration: none;
+    white-space: nowrap;
+    font-variation-settings: "wdth" var(--n-wdth-neutral);
+}
+
+.n-nav__brand sup {
+    font-size: 0.5em;
+    top: -0.7em;
+    margin-left: 1px;
+}
+
+.n-nav__links {
+    display: flex;
+    align-items: center;
+    gap: var(--n-s5);
+}
+
+.n-nav__link {
+    font-family: var(--n-font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--n-glass-ink);
+    opacity: 0.72;
+    text-decoration: none;
+    white-space: nowrap;
+    position: relative;
+    transition: opacity var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-nav__link:hover,
+.n-nav__link.is-active { opacity: 1; color: var(--n-glass-ink); }
+
+.n-nav__link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -5px;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-nav__link:hover::after,
+.n-nav__link.is-active::after { transform: scaleX(1); }
+
+/* Theme toggle + mobile trigger share the round-icon treatment. */
+.n-nav__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    border: 1px solid var(--n-glass-line);
+    background: transparent;
+    color: var(--n-glass-ink);
+    cursor: pointer;
+    font-size: 0.8rem;
+    line-height: 1;
+    transition: background-color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-nav__icon:hover { background: var(--n-accent-soft); }
+
+.n-nav__burger { display: none; }
+
+/* Swap the toggle glyph from CSS so the button needs no JS to stay in sync. */
+.n-nav__theme .n-ico-sun  { display: none; }
+.n-nav__theme .n-ico-moon { display: inline; }
+:root[data-theme="light"] .n-nav__theme .n-ico-sun  { display: inline; }
+:root[data-theme="light"] .n-nav__theme .n-ico-moon { display: none; }
+
+@media (max-width: 900px) {
+    .n-nav__burger { display: inline-flex; }
+
+    .n-nav__pill { flex-wrap: wrap; row-gap: 0; }
+
+    .n-nav__links {
+        order: 3;
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--n-s3);
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height var(--n-dur-mid) var(--n-ease-out),
+                    padding var(--n-dur-mid) var(--n-ease-out);
+    }
+
+    .n-nav__pill.is-open { border-radius: 24px; }
+
+    .n-nav__pill.is-open .n-nav__links {
+        max-height: 22rem;
+        padding: var(--n-s3) 0 var(--n-s5);
+    }
+
+    .n-nav__link { font-size: 0.8rem; }
+}
+
+
+/* --------------------------------------------------------------------------
+   6. Type roles
+   -------------------------------------------------------------------------- */
+
+.n-display-xl,
+.n-display-l,
+.n-display-m {
+    font-family: var(--n-font-display);
+    font-weight: 700;
+    color: var(--n-ink);
+    text-wrap: balance;
+    margin: 0;
+}
+
+.n-display-xl {
+    font-size: var(--n-size-display-xl);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    font-variation-settings: "wdth" var(--n-wdth-tight);
+}
+
+.n-display-l {
+    font-size: var(--n-size-display-l);
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+    font-variation-settings: "wdth" var(--n-wdth-neutral);
+}
+
+.n-display-m {
+    font-size: var(--n-size-display-m);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variation-settings: "wdth" var(--n-wdth-neutral);
+}
+
+.n-body {
+    font-family: var(--n-font-body);
+    font-size: var(--n-size-body);
+    line-height: 1.7;
+    color: var(--n-ink-2);
+    max-width: var(--n-measure);
+    margin: 0;
+}
+
+.n-label {
+    font-family: var(--n-font-mono);
+    font-size: var(--n-size-label);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--n-ink-3);
+    margin: 0;
+}
+
+/* On top of a wash the type is always light — the photo is a dark print
+   in both themes, so these do NOT follow the ink tokens. */
+.n-on-wash            { color: #fff; }
+.n-on-wash-2          { color: rgba(255, 255, 255, 0.76); }
+
+
+/* --------------------------------------------------------------------------
+   7. The matte
+
+   Two code paths, deliberately separated so real photography drops in
+   without touching CSS:
+
+     .n-matte          always paints the gradient fallback
+     .n-matte__media   the <img>, rendered only when a photo exists
+
+   Adding art is adding one <img class="n-matte__media"> inside the matte.
+   -------------------------------------------------------------------------- */
+
+.n-matte {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--n-matte-radius);
+    isolation: isolate;
+    display: flex;
+    align-items: flex-end;
+    min-height: clamp(20rem, 62vh, 40rem);
+    padding: clamp(1.5rem, 4vw, 3.5rem);
+
+    /* Path A — fallback. Always present, always correct on its own. */
+    background-color: var(--n-wash-lo);
+    background-image: linear-gradient(152deg,
+        var(--n-wash-lo) 8%,
+        var(--n-wash-hi) 92%);
+}
+
+.n-matte--centered { align-items: center; justify-content: center; text-align: center; }
+.n-matte--short    { min-height: clamp(12rem, 34vh, 22rem); }
+
+/* Path B — real photography, at its own exposure and colour. */
+.n-matte__media {
+    position: absolute;
+    z-index: -1;
+
+    /* Oversized by --n-parallax-range top AND bottom, so the parallax
+       translate can never slide the image off its own edge and expose the
+       gradient underneath. The JS clamps the offset to the same range. */
+    left: 0;
+    right: 0;
+    top: calc(-1 * var(--n-parallax-range));
+    width: 100%;
+    height: calc(100% + var(--n-parallax-range) * 2);
+
+    object-fit: cover;
+
+    /* scale and translate stay separate properties on purpose: the load-in
+       transitions `scale` over 1.4s, while `translate` carries the scroll
+       parallax and must never be transitioned or it lags the scroll. */
+    scale: 1.06;
+    translate: 0 var(--n-parallax, 0px);
+    transition: scale var(--n-dur-hero) var(--n-ease-out);
+    will-change: scale, translate;
+}
+
+.n-matte.is-loaded .n-matte__media { scale: 1; }
+
+/* Gradient scrim so display type stays legible over any image without
+   sitting in a solid box. */
+.n-matte::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    /* Biased toward the text, not spread over the whole frame — the right
+       side of the photograph stays at its true exposure and colour. */
+    background:
+        linear-gradient(90deg,
+            rgba(10, 8, 7, 0.88) 0%,
+            rgba(10, 8, 7, 0.58) 24%,
+            rgba(10, 8, 7, 0.12) 54%,
+            rgba(10, 8, 7, 0)    74%),
+        linear-gradient(0deg,
+            rgba(10, 8, 7, 0.46) 0%,
+            rgba(10, 8, 7, 0)    40%);
+    pointer-events: none;
+}
+
+.n-matte--centered::after {
+    background: radial-gradient(120% 80% at 50% 60%,
+        rgba(10, 8, 7, 0.62) 0%,
+        rgba(10, 8, 7, 0.30) 55%,
+        rgba(10, 8, 7, 0.14) 100%);
+}
+
+.n-matte__body {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--n-s3);
+    max-width: 24ch;
+}
+
+.n-matte--centered .n-matte__body { max-width: 28ch; align-items: center; }
+
+.n-matte__tag {
+    position: absolute;
+    top: var(--n-s5);
+    right: var(--n-s5);
+    font-family: var(--n-font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #fff;
+    background: rgba(10, 8, 7, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    padding: 0.35rem 0.8rem;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* Wash modifiers set the gradient stops only. REAL PHOTOGRAPHY RENDERS IN
+   ITS OWN COLOUR — the wash colours the gradient fallback (the no-photo
+   state), never the photo itself. */
+.n-matte--ember { --n-wash-lo: #1C0603; --n-wash-hi: #E8532A; }
+.n-matte--haldi { --n-wash-lo: #14100A; --n-wash-hi: #C99A4E; }
+.n-matte--neem  { --n-wash-lo: #05100E; --n-wash-hi: #3E8574; }
+
+
+
+/* --------------------------------------------------------------------------
+   8. Filter pills
+   -------------------------------------------------------------------------- */
+
+.n-pillbar {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--n-s1);
+    padding: var(--n-s2) 0;
+}
+
+.n-pillbar__indicator {
+    position: absolute;
+    top: var(--n-s2);
+    left: 0;
+    height: calc(100% - var(--n-s2) * 2);
+    border-radius: 999px;
+    background: var(--n-ink);
+    opacity: 0;
+    transition: transform var(--n-dur-mid) var(--n-ease-spring),
+                width var(--n-dur-mid) var(--n-ease-spring);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.n-pill {
+    position: relative;
+    z-index: 1;
+    font-family: var(--n-font-mono);
+    font-size: var(--n-size-label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--n-ink-3);
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.45rem 0.95rem;
+    cursor: pointer;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-pill:hover { color: var(--n-ink); }
+.n-pill.is-active { color: var(--n-canvas); font-weight: 600; }
+
+
+/* --------------------------------------------------------------------------
+   9. Underline fields — no boxed inputs anywhere
+   -------------------------------------------------------------------------- */
+
+.n-field { display: flex; flex-direction: column; gap: var(--n-s2); }
+
+.n-field__label {
+    font-family: var(--n-font-mono);
+    font-size: var(--n-size-label);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--n-ink-3);
+}
+
+.n-field__input,
+.n-field__input:focus {
+    font-family: var(--n-font-body);
+    font-size: var(--n-size-body);
+    color: var(--n-ink);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--n-line-2);
+    border-radius: 0;
+    padding: var(--n-s2) 0;
+    width: 100%;
+    outline: none;
+    box-shadow: none;
+    transition: border-color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-field__input::placeholder { color: var(--n-ink-3); }
+.n-field__input:focus        { border-bottom-color: var(--n-accent); }
+.n-field__input:user-invalid { border-bottom-color: #C4523F; }
+
+textarea.n-field__input { resize: vertical; min-height: 7rem; line-height: 1.7; }
+
+.n-field__input[type="file"] {
+    color: var(--n-ink-2);
+    font-family: var(--n-font-mono);
+    font-size: var(--n-size-label);
+}
+
+select.n-field__input {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--n-ink-3) 50%),
+                      linear-gradient(135deg, var(--n-ink-3) 50%, transparent 50%);
+    background-position: right 0.75rem center, right 0.4rem center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 1.75rem;
+}
+
+select.n-field__input option { background: var(--n-surface); color: var(--n-ink); }
+
+
+/* --------------------------------------------------------------------------
+   10. Buttons
+   -------------------------------------------------------------------------- */
+
+.n-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--n-s2);
+    font-family: var(--n-font-mono);
+    font-size: var(--n-size-label);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #fff;
+    background: var(--n-accent);
+    border: 1px solid var(--n-accent);
+    border-radius: 999px;
+    padding: 0.7rem 1.5rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color var(--n-dur-fast) var(--n-ease-out),
+                border-color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-btn:hover { background: var(--n-accent-hover); border-color: var(--n-accent-hover); color: #fff; }
+
+.n-btn:disabled {
+    background: var(--n-raised);
+    border-color: var(--n-line);
+    color: var(--n-ink-3);
+    cursor: not-allowed;
+}
+
+.n-btn--ghost {
+    background: transparent;
+    border-color: var(--n-line-2);
+    color: var(--n-ink);
+}
+
+.n-btn--ghost:hover { background: var(--n-accent-soft); border-color: var(--n-accent); color: var(--n-ink); }
+
+
+/* --------------------------------------------------------------------------
+   11. Cards + asymmetric grid
+   -------------------------------------------------------------------------- */
+
+.n-card {
+    position: relative;
+    display: block;
+    border-radius: var(--n-card-radius);
+    overflow: hidden;
+    border: 1px solid var(--n-line);
+    text-decoration: none;
+    color: inherit;
+    isolation: isolate;
+
+    /* Same two-path logic as the matte: a card with no photo falls back to
+       a gradient rather than a flat grey panel, so the grid never has a
+       dead tile in it. */
+    background-color: var(--n-wash-lo);
+    background-image: linear-gradient(152deg, #14100A 10%, #4A3A28 92%);
+}
+
+.n-card__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+    transition: scale 500ms var(--n-ease-out);
+    scale: 1;
+}
+
+.n-card:hover .n-card__media { scale: 1.05; }
+
+.n-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(0deg,
+        rgba(10, 8, 7, 0.86) 0%,
+        rgba(10, 8, 7, 0.30) 42%,
+        rgba(10, 8, 7, 0) 72%);
+    pointer-events: none;
+}
+
+.n-card__body {
+    position: relative;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--n-s4);
+    height: 100%;
+    justify-content: flex-end;
+}
+
+.n-card__title {
+    font-family: var(--n-font-display);
+    font-size: 1.0625rem;
+    font-weight: 650;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+
+.n-card__meta {
+    font-family: var(--n-font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: rgba(255, 255, 255, 0.72);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Deterministic asymmetric rhythm: every 4th card goes landscape.
+   Assigned by index, not by content, so the pattern never depends on
+   which listings happen to load. */
+.n-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: var(--n-grid-gap);
+}
+
+.n-grid > * { aspect-ratio: 4 / 5; }
+
+/* The landscape card only spans two columns once there are at least three
+   to span. At two columns a full-width card reads as a divider, not as
+   rhythm. 52rem ≈ the point where auto-fill yields a third track. */
+@media (min-width: 52rem) {
+    .n-grid > *:nth-child(4n) { aspect-ratio: 3 / 2; grid-column: span 2; }
+}
+
+@media (max-width: 700px) {
+    .n-grid { grid-template-columns: repeat(2, 1fr); }
+    .n-grid > * { aspect-ratio: 4 / 5; }
+}
+
+
+/* --------------------------------------------------------------------------
+   12. Footer
+   -------------------------------------------------------------------------- */
+
+.n-footer {
+    border-top: 1px solid var(--n-line);
+    margin-top: var(--n-s8);
+    padding: var(--n-s6) var(--n-matte-inset) var(--n-s7);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--n-s4);
+}
+
+.n-footer__brand {
+    font-family: var(--n-font-mono);
+    font-size: var(--n-size-label);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--n-ink-3);
+}
+
+.n-footer__links { display: flex; gap: var(--n-s5); }
+
+.n-footer__links a {
+    font-family: var(--n-font-mono);
+    font-size: var(--n-size-label);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--n-ink-3);
+    text-decoration: none;
+    transition: color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-footer__links a:hover { color: var(--n-ink); }
+
+.n-footer__socials { display: flex; gap: var(--n-s4); color: var(--n-ink-3); font-size: 1rem; }
+.n-footer__socials a { color: inherit; transition: color var(--n-dur-fast) var(--n-ease-out); }
+.n-footer__socials a:hover { color: var(--n-accent); }
+
+
+/* --------------------------------------------------------------------------
+   13. Eyebrow-label + value pairs
+
+   The reference's "OFFICE / Main Street 123" pattern. Replaces the grey
+   boxes the listing detail used for LOCATION / COUNTRY.
+   -------------------------------------------------------------------------- */
+
+.n-kv { display: flex; flex-direction: column; gap: 3px; }
+
+.n-kv__k {
+    font-family: var(--n-font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--n-ink-3);
+}
+
+.n-kv__v {
+    font-family: var(--n-font-display);
+    font-size: 1.375rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    color: var(--n-ink);
+}
+
+.n-kv-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: var(--n-s5);
+    padding-block: var(--n-s5);
+    border-top: 1px solid var(--n-line);
+    border-bottom: 1px solid var(--n-line);
+}
+
+
+/* --------------------------------------------------------------------------
+   14. Reviews
+   -------------------------------------------------------------------------- */
+
+/* Reviews sit in one bordered panel that uses the full content width,
+   rather than being squeezed into the 65ch reading column. */
+.n-panel {
+    border: 1px solid var(--n-line);
+    border-radius: var(--n-matte-radius);
+    background: var(--n-surface);
+    padding: clamp(1.5rem, 4vw, 3rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--n-s6);
+}
+
+/* Form on the left, the list on the right, so the panel fills horizontally
+   instead of running as one long narrow strip. */
+.n-review-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 23rem) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+}
+
+.n-review-layout > * { min-width: 0; }
+
+.n-review-form {
+    position: sticky;
+    top: calc(var(--n-nav-h) + var(--n-matte-inset) * 2);
+    display: flex;
+    flex-direction: column;
+    gap: var(--n-s5);
+    padding-right: clamp(0rem, 2vw, 2rem);
+    border-right: 1px solid var(--n-line);
+}
+
+@media (max-width: 900px) {
+    .n-review-layout { grid-template-columns: 1fr; }
+    .n-review-form {
+        position: static;
+        padding-right: 0;
+        padding-bottom: var(--n-s5);
+        border-right: 0;
+        border-bottom: 1px solid var(--n-line);
+    }
+}
+
+.n-reviews { display: flex; flex-direction: column; }
+
+/* First row needs no rule — the panel already frames it. */
+.n-reviews .n-review:first-child { border-top: 0; padding-top: 0; }
+
+.n-review {
+    display: flex;
+    flex-direction: column;
+    gap: var(--n-s3);
+    padding-block: var(--n-s5);
+    border-top: 1px solid var(--n-line);
+}
+
+.n-review__head {
+    display: flex;
+    align-items: center;
+    gap: var(--n-s3);
+    flex-wrap: wrap;
+}
+
+.n-review__avatar {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--n-accent-soft);
+    border: 1px solid var(--n-accent);
+    color: var(--n-accent);
+    font-family: var(--n-font-display);
+    font-size: 0.875rem;
+    font-weight: 650;
+    text-transform: uppercase;
+}
+
+.n-review__name {
+    font-family: var(--n-font-display);
+    font-size: 1rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--n-ink);
+}
+
+.n-review__text {
+    font-size: var(--n-size-body);
+    line-height: 1.7;
+    color: var(--n-ink-2);
+    max-width: var(--n-measure);
+}
+
+.n-review__foot { display: flex; align-items: center; gap: var(--n-s4); flex-wrap: wrap; }
+
+/* Starability renders a fixed 150x30 sprite; scale it down to sit with
+   the type rather than dominate the row. */
+.n-review .starability-result {
+    transform: scale(0.72);
+    transform-origin: left center;
+    margin: 0;
+}
+
+.n-review__delete {
+    font-family: var(--n-font-mono);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--n-ink-3);
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-review__delete:hover { color: var(--n-accent); }
+
+
+/* --------------------------------------------------------------------------
+   15. Flash + toast popups
+
+   Floats clear of the fixed nav, glass like the nav, accent stripe carries
+   the semantic. Same treatment for server flashes and the AI quota toast.
+   -------------------------------------------------------------------------- */
+
+.n-flash-wrap {
+    position: fixed;
+    top: calc(var(--n-nav-h) + var(--n-matte-inset) * 2);
+    left: var(--n-matte-inset);
+    right: var(--n-matte-inset);
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--n-s2);
+    pointer-events: none;
+}
+
+.n-flash {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--n-s3);
+    max-width: 34rem;
+    width: fit-content;
+    padding: 0.85rem 1.1rem;
+    border-radius: 14px;
+    background: var(--n-glass);
+    border: 1px solid var(--n-glass-line);
+    border-left: 2px solid var(--n-accent);
+    color: var(--n-ink);
+    box-shadow: var(--n-shadow);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    font-size: var(--n-size-small);
+    animation: n-flash-in var(--n-dur-mid) var(--n-ease-out) both;
+}
+
+/* The glass alone is too transparent to read against a photo, so the
+   flash gets an opaque backing plate underneath the blur. */
+.n-flash::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--n-surface);
+    opacity: 0.88;
+    z-index: -1;
+}
+
+.n-flash { position: relative; isolation: isolate; }
+
+.n-flash--success { border-left-color: #4E9E7A; }
+.n-flash--error   { border-left-color: #C4523F; }
+
+.n-flash__icon {
+    font-family: var(--n-font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--n-ink-3);
+    white-space: nowrap;
+}
+
+.n-flash__close {
+    background: none;
+    border: 0;
+    color: var(--n-ink-3);
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 0 0 0 var(--n-s2);
+    transition: color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-flash__close:hover { color: var(--n-ink); }
+
+.n-flash.is-out { animation: n-flash-out var(--n-dur-fast) var(--n-ease-out) both; }
+
+@keyframes n-flash-in {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes n-flash-out {
+    from { opacity: 1; transform: none; }
+    to   { opacity: 0; transform: translateY(-10px); }
+}
+
+/* The AI quota toast reuses the flash treatment, bottom-right. */
+.ai-toast {
+    position: fixed;
+    bottom: var(--n-s5);
+    right: var(--n-s5);
+    max-width: 22rem;
+    display: flex;
+    gap: var(--n-s3);
+    padding: 1rem 1.15rem;
+    border-radius: 14px;
+    background: var(--n-surface);
+    border: 1px solid var(--n-line);
+    border-left: 2px solid var(--n-accent);
+    color: var(--n-ink);
+    box-shadow: var(--n-shadow);
+    z-index: 1100;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity var(--n-dur-fast) ease, transform var(--n-dur-fast) var(--n-ease-out);
+}
+
+.ai-toast.show   { opacity: 1; transform: none; }
+.ai-toast.hidden { display: none; }
+.ai-toast-icon    { font-size: 1.1rem; line-height: 1.2; color: var(--n-accent); }
+.ai-toast-title   { font-family: var(--n-font-display); font-weight: 650; font-size: 0.9375rem; margin-bottom: 2px; }
+.ai-toast-message { font-size: var(--n-size-small); line-height: 1.5; color: var(--n-ink-2); }
+
+
+/* --------------------------------------------------------------------------
+   16. Auth pages — matte panel beside an underline form
+   -------------------------------------------------------------------------- */
+
+.n-auth {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--n-grid-gap);
+    align-items: stretch;
+    max-width: 76rem;
+    margin-inline: auto;
+}
+
+.n-auth__form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--n-s5);
+    padding: clamp(1.5rem, 4vw, 3.5rem);
+    border: 1px solid var(--n-line);
+    border-radius: var(--n-matte-radius);
+    background: var(--n-surface);
+}
+
+.n-auth__fields { display: flex; flex-direction: column; gap: var(--n-s5); }
+
+.n-auth__foot {
+    font-size: var(--n-size-small);
+    color: var(--n-ink-2);
+}
+
+.n-auth__foot a { color: var(--n-accent); text-decoration: none; font-weight: 600; }
+.n-auth__foot a:hover { text-decoration: underline; }
+
+/* Bootstrap's validation feedback, retyped in the system's voice. */
+.n-field .invalid-feedback {
+    font-family: var(--n-font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #C4523F;
+}
+
+@media (max-width: 860px) {
+    .n-auth { grid-template-columns: 1fr; }
+    .n-auth > .n-matte { min-height: 14rem; }
+}
+
+
+/* --------------------------------------------------------------------------
+   17. Motion
+   -------------------------------------------------------------------------- */
+
+/* Scoped under .n-js, which an inline <head> script sets. If that script
+   never runs — JS disabled, a syntax error, a truncated response — the
+   content stays VISIBLE instead of being hidden forever by opacity:0.
+   A blank page is a much worse failure than a missing animation. */
+.n-js .n-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity var(--n-dur-reveal) var(--n-ease-out),
+                transform var(--n-dur-reveal) var(--n-ease-out);
+    transition-delay: calc(var(--i, 0) * var(--n-stagger));
+}
+
+.n-js .n-reveal.is-in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .n-js .n-reveal { opacity: 1; transform: none; transition: none; }
+
+    .n-matte__media,
+    .n-card__media,
+    .n-pillbar__indicator,
+    .n-nav__link::after,
+    .n-nav__links { transition: none; }
+
+    .n-matte__media { scale: 1; translate: none; }
+}
+
+
+/* --------------------------------------------------------------------------
+   14. Utilities
+   -------------------------------------------------------------------------- */
+
+.n-stack   { display: flex; flex-direction: column; gap: var(--n-s5); }
+.n-column  { max-width: var(--n-measure); margin-inline: auto; }
+.n-section { display: flex; flex-direction: column; gap: var(--n-s5); padding-block: var(--n-s7); }
+.n-center  { text-align: center; align-items: center; }

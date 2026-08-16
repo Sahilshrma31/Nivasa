@@ -1,79 +1,36 @@
-<nav class="navbar navbar-expand-md bg-body-light border-bottom sticky-top animated-navbar ">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/">
-      <img src="/nivasa.png" alt="Logo" class="navbar-logo">
-    </a>
+<!-- Floating glass pill. Sits ON TOP of the hero wash, inset from the top
+     edge — never a solid bar. Search lives in the filter row on /listings,
+     not up here. -->
+<nav class="n-nav">
+  <div class="n-nav__pill" id="navPill">
 
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <a class="n-nav__brand" href="/listings">Nivasa<sup>&reg;</sup></a>
 
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <!-- Left nav links -->
-      <div class="navbar-nav">
-        <a class="nav-link" href="/listings">All Nivasa</a>
-        <a class="nav-link" href="/listings/new">Add new Nivasa</a>
-        <% if (currUser) { %>
-          <li class="nav-item">
-            <a class="nav-link" href="/bookings/mine">My Bookings</a>
-          </li>
-        <% } %>
-        
-      </div>
-
-      <!-- Centered Search + Filters -->
-      <div class="navbar-nav mx-auto w-100 justify-content-center">
-        <form class="d-flex flex-wrap align-items-center gap-2" action="/listings/search" method="GET">
-
-          <!-- Search Query -->
-          <input 
-            type="text" 
-            name="q" 
-            class="form-control form-control-sm"
-            placeholder="Search..." 
-            style="max-width: 160px;"
-            value="<%= typeof query !== 'undefined' ? query : '' %>">
-
-          <!-- Min Price -->
-          <input 
-            type="number" 
-            name="minPrice" 
-            class="form-control form-control-sm"
-            placeholder="Min ₹" 
-            style="width: 100px;">
-
-          <!-- Max Price -->
-          <input 
-            type="number" 
-            name="maxPrice" 
-            class="form-control form-control-sm"
-            placeholder="Max ₹" 
-            style="width: 100px;">
-
-          <!-- Sort -->
-          <select name="sort" class="form-select form-select-sm" style="width: 140px;">
-    <option value="">Sort</option>
-    <option value="priceLowToHigh">₹ Low → High</option>
-    <option value="priceHighToLow">₹ High → Low</option>
-          </select>
-
-
-          <!-- Button -->
-          <button class="btn btn-sm btn-outline-primary" type="submit">
-            <i class="fas fa-search"></i>
-          </button>
-        </form>
-      </div>
-
-      <!-- Right auth links -->
-      <div class="navbar-nav ms-auto">
-        <% if (!currUser) { %>
-          <a class="nav-link" href="/signup">Sign up</a>
-          <a class="nav-link" href="/login">Log in</a>
-        <% } else { %>
-          <a class="nav-link" href="/logout">Log out</a>
-        <% } %>
-      </div>
+    <div class="n-nav__links" id="navLinks">
+      <a class="n-nav__link" href="/listings">Listings</a>
+      <a class="n-nav__link" href="/listings/new">Add</a>
+      <% if (currUser) { %>
+        <a class="n-nav__link" href="/bookings/mine">Bookings</a>
+        <a class="n-nav__link" href="/logout">Log out</a>
+      <% } else { %>
+        <a class="n-nav__link" href="/signup">Sign up</a>
+        <a class="n-nav__link" href="/login">Log in</a>
+      <% } %>
     </div>
+
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <button class="n-nav__icon n-nav__theme" id="themeToggle"
+              type="button" aria-label="Switch theme">
+        <span class="n-ico-moon" aria-hidden="true">&#9789;</span>
+        <span class="n-ico-sun" aria-hidden="true">&#9788;</span>
+      </button>
+
+      <button class="n-nav__icon n-nav__burger" id="navBurger"
+              type="button" aria-label="Menu" aria-expanded="false"
+              aria-controls="navLinks">
+        <i class="fas fa-bars" aria-hidden="true"></i>
+      </button>
+    </div>
+
   </div>
 </nav>

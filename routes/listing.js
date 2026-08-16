@@ -6,8 +6,9 @@ const multer = require("multer");
 const { isLoggedIn, isOwner, validateListing } = require("../middleware.js");
 const listingController = require("../controllers/listing");
 const mongoose = require("mongoose");
-const { storage } = require("../cloudconfig.js");
-const upload = multer({ storage });
+
+const upload = multer({ storage: multer.memoryStorage() });
+
 const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
 
 
@@ -31,9 +32,10 @@ router.route("/")
 // Show form to create a new listing
 router.get("/new", isLoggedIn, wrapAsync(listingController.renderNewForm));
 
-// Search listings based on query
-// This MUST come before the dynamic ":id" route to avoid conflict
-router.get("/search", wrapAsync(listingController.searchListings));
+// Search/filter/sort is handled by the index route itself, which already
+// reads search/minPrice/maxPrice/sort off req.query. The old /search route
+// pointed at a controller that was never written, so it always threw
+// "fn is not a function".
 
 // Show form to edit a specific listing
 router.get("/:id/edit", isLoggedIn, isOwner, wrapAsync(listingController.renderEditForm));

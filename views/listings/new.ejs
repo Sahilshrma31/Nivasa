@@ -1,83 +1,89 @@
 <% layout("/layouts/boilerplate") %>
 
-<div class="row">
-  <div class="col-8 offset-2">
-    <br><br>
-    <h3>Create New Listing</h3>
-    <form method="POST" action="/listings" enctype="multipart/form-data" novalidate class="needs-validation">
-      <!-- Title -->
-      <div class="mb-3">
-        <label for="title" class="form-label">Title</label>
-        <input name="listing[title]" type="text" placeholder="Enter title" class="form-control" id="title" required />
-        <div class="valid-feedback">Looks great!</div>
-        <div class="invalid-feedback">Please enter a title.</div>
-      </div>
+<div class="n-wide">
 
-      <!-- Description -->
-      <div class="mb-3">
-        <label for="description" class="form-label">Description</label>
-        <textarea name="listing[description]" placeholder="Enter description" class="form-control" id="description" required></textarea>
-        <div class="valid-feedback">Looks great!</div>
-        <div class="invalid-feedback">Please provide a description.</div>
-        <button type="button" id="generateBtn" class="ai-generate-btn">
-          <span class="ai-generate-btn__stars">✦ ✧</span>
-          <span class="ai-generate-btn__text">Generate AI-Based Description For Your Listing</span>
-        </button>
-      </div>
+  <section class="n-matte n-matte--ember n-matte--lead n-matte--short n-matte--centered">
+    <div class="n-matte__body">
+      <p class="n-label n-on-wash-2">Host with Nivasa</p>
+      <h1 class="n-display-l n-on-wash">List your place</h1>
+    </div>
+  </section>
 
-      <!-- Image (required now) -->
-      <div class="mb-3">
-        <label for="image" class="form-label">Upload Listing Image</label>
-        <input name="listing[image]" type="file" class="form-control" id="image" required />
-        <div class="invalid-feedback">Please upload an image for the listing.</div>
-      </div>
+  <section class="n-section" data-reveal-group>
+    <div class="n-column n-stack n-reveal">
 
-      <!-- Price and Country -->
-      <div class="row">
-        <div class="mb-3 col-md-4">
-          <label for="price" class="form-label">Price</label>
-          <input name="listing[price]" type="number" placeholder="Enter price" class="form-control" id="price" required />
-          <div class="valid-feedback">Looks great!</div>
-          <div class="invalid-feedback">Please enter a valid price.</div>
+      <form method="POST" action="/listings" enctype="multipart/form-data"
+            novalidate class="needs-validation n-stack">
+
+        <div class="n-field">
+          <label class="n-field__label" for="title">Title</label>
+          <input class="n-field__input" name="listing[title]" id="title" type="text"
+                 placeholder="Hillside Cottage, Manali" required>
+          <div class="invalid-feedback">Title is required</div>
         </div>
 
-        <div class="mb-3 col-md-8">
-          <label for="country" class="form-label">Country</label>
-          <input name="listing[country]" type="text" placeholder="Enter country" class="form-control" id="country" required />
-          <div class="valid-feedback">Looks great!</div>
-          <div class="invalid-feedback">Please enter a country.</div>
+        <div class="n-field">
+          <label class="n-field__label" for="description">Description</label>
+          <textarea class="n-field__input" name="listing[description]" id="description"
+                    rows="5" placeholder="What makes this place worth the trip?" required></textarea>
+          <div class="invalid-feedback">Description is required</div>
+          <button type="button" id="generateBtn" class="n-btn n-btn--ghost"
+                  style="align-self:flex-start; margin-top:var(--n-s3);">
+            <span class="ai-generate-btn__stars" aria-hidden="true">&#10022;</span>
+            <span class="ai-generate-btn__text">Write it with AI</span>
+          </button>
         </div>
-      </div>
 
-      <!-- Location -->
-      <div class="mb-3">
-        <label for="location" class="form-label">Location</label>
-        <input name="listing[location]" type="text" placeholder="Enter location" class="form-control" id="location" required />
-        <div class="valid-feedback">Looks great!</div>
-        <div class="invalid-feedback">Please provide a location.</div>
-      </div>
+        <div class="n-field">
+          <label class="n-field__label" for="image">Listing image</label>
+          <input class="n-field__input" name="listing[image]" id="image" type="file" required>
+          <div class="invalid-feedback">An image is required</div>
+        </div>
 
-      <!-- Submit -->
-      <br>
-      <button class="btn btn-dark add-btn" type="submit">Add</button>
-      <br><br>
-    </form>
-  </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr)); gap:var(--n-s5);">
+          <div class="n-field">
+            <label class="n-field__label" for="price">Price per night</label>
+            <input class="n-field__input" name="listing[price]" id="price" type="number"
+                   placeholder="3400" required>
+            <div class="invalid-feedback">Enter a valid price</div>
+          </div>
+
+          <div class="n-field">
+            <label class="n-field__label" for="location">Location</label>
+            <input class="n-field__input" name="listing[location]" id="location" type="text"
+                   placeholder="Shimla" required>
+            <div class="invalid-feedback">Location is required</div>
+          </div>
+
+          <div class="n-field">
+            <label class="n-field__label" for="country">Country</label>
+            <input class="n-field__input" name="listing[country]" id="country" type="text"
+                   placeholder="India" required>
+            <div class="invalid-feedback">Country is required</div>
+          </div>
+        </div>
+
+        <div><button class="n-btn" type="submit">Add listing</button></div>
+      </form>
+
+    </div>
+  </section>
+
 </div>
 
-<!-- AI Status Toast -->
+<!-- AI status toast -->
 <div id="ai-toast" class="ai-toast hidden">
-  <div class="ai-toast-icon">⚡</div>
+  <div class="ai-toast-icon">&#10022;</div>
   <div class="ai-toast-body">
     <div class="ai-toast-title">AI limit reached</div>
     <div class="ai-toast-message">
-      This application has reached its daily AI usage limit. Please try again later.
+      Nivasa has hit its daily AI usage limit. Write the description yourself, or try again tomorrow.
     </div>
   </div>
 </div>
 
-
 <script>
+  // Note: form validation is bound once, globally, in /js/script.js.
   const generateBtn = document.getElementById("generateBtn");
   const btnText = generateBtn.querySelector(".ai-generate-btn__text");
   const descriptionField = document.getElementById("description");
@@ -85,7 +91,7 @@
 
   function showAiToast() {
     toast.classList.remove("hidden");
-    toast.classList.add("show");
+    requestAnimationFrame(() => toast.classList.add("show"));
 
     setTimeout(() => {
       toast.classList.remove("show");
@@ -100,21 +106,18 @@
     const price = document.getElementById("price").value.trim();
 
     if (!title || !location || !country || !price) {
-      // keep this simple validation inline
+      btnText.innerText = "Fill title, location, country and price first";
+      setTimeout(() => { btnText.innerText = "Write it with AI"; }, 2600);
       return;
     }
 
-    //  Disable button + show loading
     generateBtn.disabled = true;
-    btnText.innerText = "Generating AI description...";
-    descriptionField.value = "Generating description, please wait...";
+    btnText.innerText = "Generating...";
 
     try {
       const res = await fetch("/listings/generate-description", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, location, country, price }),
       });
 
@@ -123,35 +126,17 @@
       if (data.success) {
         descriptionField.value = data.description;
       } else if (data.reason === "QUOTA_EXCEEDED") {
-        descriptionField.value = "";
-        showAiToast(); 
-      } else {
-        descriptionField.value = "";
+        showAiToast();
       }
     } catch (err) {
       console.error(err);
-      descriptionField.value = "";
+      showAiToast();
     } finally {
-      //  Cooldown to avoid quota abuse
+      // Cooldown to avoid quota abuse
       setTimeout(() => {
         generateBtn.disabled = false;
-        btnText.innerText = "Generate AI-Based Description For Your Listing";
+        btnText.innerText = "Write it with AI";
       }, 6000);
     }
   });
-
-  // Bootstrap validation
-  (function () {
-    'use strict';
-    const forms = document.querySelectorAll('.needs-validation');
-    Array.from(forms).forEach(form => {
-      form.addEventListener('submit', event => {
-        if (!form.checkValidity()) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-      }, false);
-    });
-  })();
 </script>

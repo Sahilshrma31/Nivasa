@@ -4,6 +4,9 @@ const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
 const redis = require("../config/redis");
 const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
 
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const s3 = require("../config/s3");
+
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
@@ -86,6 +89,10 @@ module.exports.index = async (req, res) => {
       sort: sort || ""
     });
 
+  } catch (err) {
+    console.error("Index error:", err);
+    req.flash("error", "Something went wrong.");
+    res.redirect("/listings");
   } finally {
     console.log("Listings response time:", Date.now() - startTime, "ms");
   }
@@ -107,9 +114,22 @@ module.exports.createListing = async (req, res) => {
     }
 
     if (req.file) {
+      const key = Date.now() + "-" + req.file.originalname;
+
+      const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype
+      };
+
+      await s3.send(new PutObjectCommand(params));
+
+      const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
       listingData.image = {
-        url: req.file.path,
-        filename: req.file.filename
+        url: imageUrl,
+        filename: key
       };
     }
 
@@ -231,9 +251,55 @@ module.exports.showListing = async (req, res) => {
       razorpayKeyId: process.env.RAZORPAY_KEY_ID
     });
 
+  } catch (err) {
+    console.error("ShowListing error:", err);
+    req.flash("error", "Something went wrong.");
+    res.redirect("/listings");
   } finally {
     console.log("Single listing response time:", Date.now() - startTime, "ms");
   }
+};
+
+
+module.exports.updateListing = async (req, res) => {
+  const { id } = req.params;
+  const listingData = req.body.listing;
+
+  if (req.file) {
+    const key = Date.now() + "-" + req.file.originalname;
+
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype
+    };
+
+    await s3.send(new PutObjectCommand(params));
+
+    const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+
+    listingData.image = {
+      url: imageUrl,
+      filename: key
+    };
+  }
+
+  await Listing.findByIdAndUpdate(id, listingData);
+
+  req.flash("success", "Listing updated successfully.");
+  res.redirect(`/listings/${id}`);
+};
+
+
+/* Render new listing form */
+module.exports.renderNewForm = (req, res) => {
+  res.render("listings/new.ejs", {
+    query: "",
+    minPrice: "",
+    maxPrice: "",
+    sort: ""
+  });
 };
 
 

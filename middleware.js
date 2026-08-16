@@ -42,25 +42,23 @@ module.exports.isOwner = async (req, res, next) => {
 };
 
 // Middleware to validate listing data using Joi schema
-module.exports.validateListing = async (req, res, next) => {
+module.exports.validateListing = (req, res, next) => {
     let { error } = listingSchema.validate(req.body);
     if (error) {
         let errMsg = error.details.map((el) => el.message).join(",");
-        throw new ExpressError(400, errMsg);
-    } else {
-        next();
+        return next(new ExpressError(400, errMsg)); 
     }
+    next();
 };
 
 // Middleware to validate review data using Joi schema
-module.exports.validatereview = async (req, res, next) => {
+module.exports.validatereview = (req, res, next) => {
     let { error } = reviewSchema.validate(req.body);
     if (error) {
         let errMsg = error.details.map((el) => el.message).join(",");
-        throw new ExpressError(400, errMsg);
-    } else {
-        next();
+        return next(new ExpressError(400, errMsg)); 
     }
+    next();
 };
 
 // Middleware to check if the logged-in user is the author of the review

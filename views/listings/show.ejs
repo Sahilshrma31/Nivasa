@@ -1,183 +1,172 @@
 <% layout("/layouts/boilerplate") %>
 
-<style>
-  @media (min-width: 768px) {
-    .listing-card-desktop {
-      max-width: 480px !important;
-    }
-  }
-</style>
-
 <script>
   const mapToken = "<%= process.env.MAP_TOKEN %>";
   const listing = <%- JSON.stringify(listing) %>;
 </script>
 
-<!-- Main Content -->
-<div class="container-fluid px-4 px-md-5 my-5">
-  <div class="row justify-content-center">
+<div class="n-wide">
 
-    <!-- Title -->
-    <div class="col-12 col-md-8 text-center mt-4 px-3">
-      <h3><%= listing.title %></h3>
+  <!-- Matted header. Same treatment as the landing hero, neem wash, with
+       the price pinned top-right and the byline under the title. -->
+  <section class="n-matte n-matte--neem n-matte--lead" data-parallax>
+    <% if (listing.image && listing.image.url) { %>
+      <img class="n-matte__media" src="<%= listing.image.url %>" alt="<%= listing.title %>">
+    <% } %>
+
+    <span class="n-matte__tag">
+      &#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : "N/A" %> / night
+    </span>
+
+    <div class="n-matte__body">
+      <h1 class="n-display-l n-on-wash"><%= listing.title %></h1>
+      <p class="n-label n-on-wash-2">
+        @<%= listing.owner ? listing.owner.username : "unknown host" %>
+        &nbsp;·&nbsp; <%= listing.location %>
+        &nbsp;·&nbsp; <%= listing.country %>
+      </p>
     </div>
+  </section>
 
-    <!-- Listing Card -->
-    <div class="col-12 col-md-6 d-flex justify-content-center mt-4 px-3 px-md-4">
-      <div class="card shadow border-0 rounded-3 overflow-hidden listing-card-desktop" style="width: 100%; max-width: 380px;">
-        <div class="position-relative">
-          <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="card-img-top d-block d-md-none" style="height: 160px; object-fit: cover;" alt="Listing Image">
-          <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="card-img-top d-none d-md-block" style="height: 220px; object-fit: cover;" alt="Listing Image">
-          <div class="position-absolute bottom-0 start-0 w-100" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
-            <div class="px-3 py-2">
-              <div class="text-white fw-bold small d-block d-md-none">
-                ₹
-                <% if (listing.price) { %>
-                  <%= listing.price.toLocaleString("en-IN") %>
-                <% } else { %>
-                  N/A
-                <% } %>
-              </div>
-              <div class="text-white fw-bold d-none d-md-block">
-                ₹
-                <% if (listing.price) { %>
-                  <%= listing.price.toLocaleString("en-IN") %>
-                <% } else { %>
-                  N/A
-                <% } %>
-              </div>
-            </div>
-          </div>
+  <!-- Body copy in a comfortable centered column -->
+  <section class="n-section" data-reveal-group>
+    <div class="n-column n-stack">
+      <p class="n-label n-reveal">About this Nivasa</p>
+      <p class="n-body n-reveal"><%= listing.description %></p>
+
+      <div class="n-kv-row n-reveal">
+        <div class="n-kv">
+          <span class="n-kv__k">Location</span>
+          <span class="n-kv__v"><%= listing.location %></span>
         </div>
-        
-        <div class="card-body p-3 p-md-4">
-          <div class="d-flex align-items-center mb-2 mb-md-3">
-            <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center me-2" style="width: 26px; height: 26px; font-size: 12px;">
-              <%= listing.owner.username.charAt(0).toUpperCase() %>
-            </div>
-            <small class="text-muted d-block d-md-none">@<%= listing.owner.username %></small>
-            <span class="text-muted d-none d-md-block">@<%= listing.owner.username %></span>
-          </div>
-          
-          <p class="text-body mb-3 small d-block d-md-none lh-base"><%= listing.description %></p>
-          <p class="text-body mb-3 d-none d-md-block lh-base"><%= listing.description %></p>
-          
-          <div class="row g-2 mb-2">
-            <div class="col-6">
-              <div class="text-center py-2 bg-light bg-dark-subtle rounded-2">
-                <div class="text-muted" style="font-size: 10px;">LOCATION</div>
-                <div class="fw-semibold text-dark text-light small d-block d-md-none"><%= listing.location %></div>
-                <div class="fw-semibold text-dark text-light d-none d-md-block"><%= listing.location %></div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="text-center py-2 bg-light bg-dark-subtle rounded-2">
-                <div class="text-muted" style="font-size: 10px;">COUNTRY</div>
-                <div class="fw-semibold text-dark text-light small d-block d-md-none"><%= listing.country %></div>
-                <div class="fw-semibold text-dark text-light d-none d-md-block"><%= listing.country %></div>
-              </div>
-            </div>
-          </div>
+        <div class="n-kv">
+          <span class="n-kv__k">Country</span>
+          <span class="n-kv__v"><%= listing.country %></span>
+        </div>
+        <div class="n-kv">
+          <span class="n-kv__k">Per night</span>
+          <span class="n-kv__v" style="font-variant-numeric:tabular-nums;">
+            &#8377;<%= listing.price ? listing.price.toLocaleString("en-IN") : "N/A" %>
+          </span>
+        </div>
+      </div>
 
-          <!-- Booking / Payment Button -->
-          <% if (!currUser) { %>
-            <div class="text-center mt-3">
-              <a href="/login" class="btn btn-outline-primary btn-sm">Login to Book This Listing</a>
+      <!-- Booking / owner actions -->
+      <div class="n-reveal" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center;">
+        <% if (!currUser) { %>
+          <a href="/login" class="n-btn">Log in to book</a>
+        <% } else if (isOwner) { %>
+          <a href="/listings/<%= listing._id %>/edit" class="n-btn n-btn--ghost">Edit listing</a>
+          <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
+            <button class="n-btn n-btn--ghost" type="submit">Delete</button>
+          </form>
+        <% } else if (hasBooked) { %>
+          <p class="n-label" style="color:var(--n-accent);">You have already booked this Nivasa</p>
+        <% } else { %>
+          <form id="paymentForm">
+            <input type="hidden" name="amount" value="<%= listing.price %>">
+            <button type="button" class="n-btn" id="rzp-button">
+              Book now &mdash; &#8377;<%= listing.price.toLocaleString("en-IN") %>
+            </button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reviews -->
+  <section class="n-section" data-reveal-group>
+    <div class="n-inner">
+      <div class="n-panel n-reveal">
+      <div class="<%= currUser ? 'n-review-layout' : '' %>">
+
+      <% if (currUser) { %>
+        <div class="n-review-form">
+          <p class="n-label">Leave a review</p>
+          <form action="/listings/<%= listing._id %>/reviews" method="POST"
+                class="needs-validation n-stack" novalidate>
+            <div class="n-field">
+              <span class="n-field__label">Rating</span>
+              <fieldset class="starability-slot">
+                <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]"
+                       value="0" checked aria-label="No rating." />
+                <% for (let i = 1; i <= 5; i++) { %>
+                  <input type="radio" id="first-rate<%= i %>" name="review[rating]" value="<%= i %>" />
+                  <label for="first-rate<%= i %>"
+                         title="<%= ['Terrible','Not good','Average','Very good','Amazing'][i-1] %>"><%= i %> star</label>
+                <% } %>
+              </fieldset>
             </div>
-          <% } else if (isOwner) { %>
-            <div class="d-flex justify-content-center mt-3 gap-2">
-              <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark btn-sm">Edit</a>
-              <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" style="display: inline;">
-                <button class="btn btn-dark btn-sm">Delete</button>
-              </form>
+
+            <div class="n-field">
+              <label class="n-field__label" for="comment">Comments</label>
+              <textarea class="n-field__input" name="review[comment]" id="comment"
+                        rows="4" placeholder="How was your stay?" required></textarea>
+              <div class="invalid-feedback">Please add a comment</div>
             </div>
-          <% } else if (hasBooked) { %>
-            <div class="text-center mt-3">
-              <p class="text-success fw-semibold small mb-0">You've already booked this listing.</p>
-            </div>
+
+            <div><button type="submit" class="n-btn">Post review</button></div>
+          </form>
+        </div>
+      <% } %>
+
+      <div class="n-stack">
+        <p class="n-label">
+          <% if (listing.reviews && listing.reviews.length) { %>
+            <%= listing.reviews.length %> review<%= listing.reviews.length === 1 ? "" : "s" %>
           <% } else { %>
-            <div class="text-center mt-3">
-              <p class="small mb-2"><strong>Ready to book this amazing place?</strong></p>
-              <form id="paymentForm">
-                <input type="hidden" name="amount" value="<%= listing.price %>">
-                <button type="button" class="btn btn-success btn-sm" id="rzp-button">
-                  Book Now - Pay ₹<%= listing.price.toLocaleString("en-IN") %>
-                </button>
-              </form>
-            </div>
+            Reviews
           <% } %>
+        </p>
+
+        <% if (listing.reviews && listing.reviews.length > 0) { %>
+          <div class="n-reviews">
+            <% for (let review of listing.reviews) { %>
+              <% const author = review.author ? review.author.username : "Deleted user"; %>
+              <article class="n-review">
+                <div class="n-review__head">
+                  <span class="n-review__avatar"><%= author.charAt(0) %></span>
+                  <span class="n-review__name"><%= author %></span>
+                </div>
+
+                <p class="n-review__text"><%= review.comment %></p>
+
+                <div class="n-review__foot">
+                  <fieldset class="starability-result" data-rating="<%= review.rating %>"></fieldset>
+                  <% if (currUser && review.author && currUser._id.toString() === review.author._id.toString()) { %>
+                    <form method="POST"
+                          action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
+                      <button class="n-review__delete" type="submit">Delete</button>
+                    </form>
+                  <% } %>
+                </div>
+              </article>
+            <% } %>
+          </div>
+        <% } else { %>
+          <p class="n-body">No reviews yet &mdash; be the first to stay and tell the story.</p>
+        <% } %>
+      </div>
+
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Map, in a matte of its own -->
+  <section class="n-section" data-reveal-group>
+    <div class="n-stack n-reveal">
+      <p class="n-label">Where you will be</p>
+      <h2 class="n-display-m"><%= listing.location %>, <%= listing.country %></h2>
+      <div class="map-section">
+        <div class="map-wrapper">
+          <div id="map"></div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Review Section (Below listing) -->
-  <div class="row justify-content-center mt-5">
-    <div class="col-12 col-md-8 col-lg-6 px-3 px-md-4">
-      <% if (currUser) { %>
-        <hr />
-        <h4 class="mb-4 text-center">Leave a Review</h4>
-        <form action="/listings/<%= listing._id %>/reviews" method="POST" class="needs-validation" novalidate>
-          <div class="mb-3">
-            <label for="rating" class="form-label">Rating</label>
-            <fieldset class="starability-slot">
-              <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="0" checked aria-label="No rating." />
-              <% for (let i = 1; i <= 5; i++) { %>
-                <input type="radio" id="first-rate<%= i %>" name="review[rating]" value="<%= i %>" />
-                <label for="first-rate<%= i %>" title="<%= ['Terrible','Not good','Average','Very good','Amazing'][i-1] %>"><%= i %> star</label>
-              <% } %>
-            </fieldset>
-          </div>
-
-          <div class="mb-3">
-            <label for="comment" class="form-label">Comments</label>
-            <textarea class="form-control" name="review[comment]" id="comment" cols="30" rows="5" required></textarea>
-            <div class="invalid-feedback">Please add some comments for the review.</div>
-          </div>
-
-          <div class="text-center">
-            <button type="submit" class="btn btn-light text-dark border">Submit Review</button>
-          </div>
-        </form>
-      <% } %>
-
-      <hr class="my-4" />
-
-      <% if (listing.reviews && listing.reviews.length > 0) { %>
-        <div class="row justify-content-center">
-          <p class="text-center"><b>All Reviews</b></p>
-          <% for (let review of listing.reviews) { %>
-            <div class="card review-card col-12 mx-auto my-2">
-              <div class="card-body">
-                <h5 class="card-title"><%= review.author.username %></h5>
-                <p class="card-text"><%= review.comment %></p>
-                <fieldset class="starability-result" data-rating="<%= review.rating %>"></fieldset>
-                <% if (currUser && currUser._id.toString() === review.author._id.toString()) { %>
-                  <form method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
-                    <button class="btn btn-sm btn-dark">Delete</button>
-                  </form>
-                <% } %>
-              </div>
-            </div>
-          <% } %>
-        </div>
-      <% } else { %>
-        <p class="no-reviews-message text-muted text-center">No reviews yet — be the first to review</p>
-      <% } %>
-    </div>
-  </div>
-
-  <!-- Map Section -->
-  <div class="map-section w-100">
-    <div class="text-center mb-4 px-3">
-      <h3>Where You Will Be</h3>
-    </div>
-    <div class="map-wrapper">
-      <div id="map"></div>
-    </div>
-  </div>
-  
-
+</div>
 
 <!-- Razorpay Checkout.js -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -208,7 +197,7 @@
           key: "<%= razorpayKeyId %>",
           amount: order.amount,
           currency: "INR",
-          name: "Nivasas",
+          name: "Nivasa",
           description: "Booking Payment for <%= listing.title %>",
           order_id: order.id,
           handler: async function (response) {
@@ -224,7 +213,6 @@
               });
 
               if (bookingRes.ok) {
-                alert("Payment Successful! Booking confirmed.");
                 window.location.href = "/bookings/mine";
               } else {
                 alert("Payment successful but booking failed. Please contact support.");
@@ -239,11 +227,11 @@
             email: "<%= currUser && currUser.email ? currUser.email : 'guest@example.com' %>",
             contact: "9999999999"
           },
-          theme: { color: "#3399cc" },
+          theme: { color: "#D9552F" },
           modal: {
             ondismiss: function () {
               button.disabled = false;
-              button.textContent = "Book Now - Pay ₹<%= listing.price.toLocaleString('en-IN') %>";
+              button.textContent = "Book now — ₹<%= listing.price.toLocaleString('en-IN') %>";
             }
           }
         };
@@ -255,7 +243,7 @@
         console.error("Payment error:", error);
         alert("Failed to initiate payment. Please try again.");
         button.disabled = false;
-        button.textContent = "Book Now - Pay ₹<%= listing.price.toLocaleString('en-IN') %>";
+        button.textContent = "Book now — ₹<%= listing.price.toLocaleString('en-IN') %>";
       }
     };
   }

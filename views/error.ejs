@@ -1,8 +1,13 @@
 <% layout("/layouts/boilerplate") %>
-    <div class="row mt-3">
-        <div class="alert alert-danger col-6 offset-3" role="alert">
-            <p class="alert-heading">
-                <%= message %>
-            </p>
-        </div>
+
+<div class="n-wide">
+  <section class="n-matte n-matte--ember n-matte--lead n-matte--centered">
+    <div class="n-matte__body">
+      <p class="n-label n-on-wash-2">Something went wrong</p>
+      <h1 class="n-display-l n-on-wash"><%= message %></h1>
+      <div style="margin-top: var(--n-s4);">
+        <a href="/listings" class="n-btn">Back to listings</a>
+      </div>
     </div>
+  </section>
+</div>

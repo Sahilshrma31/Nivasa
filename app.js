@@ -43,7 +43,7 @@ const store = MongoStore.create({ // Session store create
   crypto: { secret: process.env.SECRET }, // Encrypt session data
   touchAfter: 24 * 3600, // Session ko sirf 24 hours baad update kare
 });
-store.on("error", () => { console.log("Error in MONGO SESSION STORE", error); }); // Store error handling
+store.on("error", (error) => { console.log("Error in MONGO SESSION STORE", error); }); // Store error handling
 
 // ---------------------- View Engine Setup ----------------------
 app.set("view engine", "ejs"); // Template engine set
@@ -97,6 +97,11 @@ app.get("/demouser", async (req, res) => { // Dummy account create for testing
   res.send(registeredUser);
 });
 
+app.use((req, res, next) => {
+  console.log("REQUEST:", req.method, req.url);
+  next();
+});
+
 // ---------------------- Routes Setup ----------------------
 app.use("/listings", listingRouter); // Listings routes
 app.use("/listings/:id/reviews", reviewRouter); // Reviews routes (nested)
@@ -126,4 +131,5 @@ app.use((err, req, res, next) => {
 
 
 // ---------------------- Start Server ----------------------
-app.listen(8080, () => { console.log("Server is listening on port 8080"); });
+const PORT = process.env.PORT || 8080; // Interview note: hosting platforms apna port env se dete hain
+app.listen(PORT, () => { console.log(`Server is listening on port ${PORT}`); });

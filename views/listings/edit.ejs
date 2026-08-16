@@ -1,59 +1,82 @@
 <% layout("/layouts/boilerplate") %>
 
-<div class="row">
-    <div class="col-8 offset-2 mt-2">
-        <h3>Edit listing</h3>
-        <form method="POST" action="/listings/<%= listing._id%>?_method=PUT" novalidate class="needs-validation" enctype="multipart/form-data">
+<div class="n-wide">
 
-            <div class="mb-3">
-                <label for="title" class="form-label">Title</label>
-                <input name="listing[title]" type="text" value="<%= listing.title %>" class="form-control" required />
-                <div class="valid-feedback">Looks good!</div>
-                <div class="invalid-feedback">Please enter a title.</div>
-            </div>
-
-            <div class="mb-3">
-                <label for="description" class="form-label">Description</label>
-                <textarea name="listing[description]" class="form-control" required><%= listing.description %></textarea>
-                <div class="valid-feedback">Looks good!</div>
-                <div class="invalid-feedback">Please enter a description.</div>
-            </div>
-
-            <div class="mb-3">
-                Original Listing Image <br />
-                <img src="<%=originalImageUrl %>" alt="Listing Image" class="img-fluid rounded" style="max-height: 250px;" />
-            </div>
- 
-            <div class="mb-3">
-                <label for="image" class="form-label">Upload New Image (optional)</label>
-                <input name="listing[image]" type="file" class="form-control" />
-                <div class="valid-feedback">Image ready to upload!</div>
-            </div>
-
-            <div class="row">
-                <div class="mb-3 col-md-4">
-                    <label for="price" class="form-label">Price</label>
-                    <input name="listing[price]" type="number" value="<%= listing.price %>" class="form-control" required />
-                    <div class="valid-feedback">Looks good!</div>
-                    <div class="invalid-feedback">Please enter a valid price.</div>
-                </div>
-
-                <div class="mb-3 col-md-8">
-                    <label for="country" class="form-label">Country</label>
-                    <input name="listing[country]" type="text" value="<%= listing.country %>" class="form-control" required />
-                    <div class="valid-feedback">Looks good!</div>
-                    <div class="invalid-feedback">Please enter the country name.</div>
-                </div>
-            </div>
-
-            <div class="mb-3">
-                <label for="location" class="form-label">Location</label>
-                <input name="listing[location]" type="text" value="<%= listing.location %>" class="form-control" required />
-                <div class="valid-feedback">Looks good!</div>
-                <div class="invalid-feedback">Please enter the location.</div>
-            </div>
-
-            <button class="btn btn-dark mt-2 edit-btn">Edit</button>
-        </form>
+  <section class="n-matte n-matte--neem n-matte--lead n-matte--short">
+    <% if (originalImageUrl) { %>
+      <img class="n-matte__media" src="<%= originalImageUrl %>" alt="" aria-hidden="true">
+    <% } %>
+    <div class="n-matte__body">
+      <p class="n-label n-on-wash-2">Edit</p>
+      <h1 class="n-display-l n-on-wash"><%= listing.title %></h1>
     </div>
+  </section>
+
+  <section class="n-section" data-reveal-group>
+    <div class="n-column n-stack n-reveal">
+
+      <form method="POST" action="/listings/<%= listing._id %>?_method=PUT"
+            class="needs-validation n-stack" novalidate enctype="multipart/form-data">
+
+        <div class="n-field">
+          <label class="n-field__label" for="title">Title</label>
+          <input class="n-field__input" name="listing[title]" id="title" type="text"
+                 value="<%= listing.title %>" required>
+          <div class="invalid-feedback">Title is required</div>
+        </div>
+
+        <div class="n-field">
+          <label class="n-field__label" for="description">Description</label>
+          <textarea class="n-field__input" name="listing[description]" id="description"
+                    rows="5" required><%= listing.description %></textarea>
+          <div class="invalid-feedback">Description is required</div>
+        </div>
+
+        <div class="n-kv-row">
+          <div class="n-kv">
+            <span class="n-kv__k">Current image</span>
+          </div>
+          <div style="grid-column: span 2;">
+            <img src="<%= originalImageUrl %>" alt="Current listing image"
+                 style="width:100%; max-width:22rem; border-radius:var(--n-card-radius); display:block;">
+          </div>
+        </div>
+
+        <div class="n-field">
+          <label class="n-field__label" for="image">Replace image (optional)</label>
+          <input class="n-field__input" name="listing[image]" id="image" type="file">
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr)); gap:var(--n-s5);">
+          <div class="n-field">
+            <label class="n-field__label" for="price">Price per night</label>
+            <input class="n-field__input" name="listing[price]" id="price" type="number"
+                   value="<%= listing.price %>" required>
+            <div class="invalid-feedback">Enter a valid price</div>
+          </div>
+
+          <div class="n-field">
+            <label class="n-field__label" for="location">Location</label>
+            <input class="n-field__input" name="listing[location]" id="location" type="text"
+                   value="<%= listing.location %>" required>
+            <div class="invalid-feedback">Location is required</div>
+          </div>
+
+          <div class="n-field">
+            <label class="n-field__label" for="country">Country</label>
+            <input class="n-field__input" name="listing[country]" id="country" type="text"
+                   value="<%= listing.country %>" required>
+            <div class="invalid-feedback">Country is required</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <button class="n-btn" type="submit">Save changes</button>
+          <a class="n-btn n-btn--ghost" href="/listings/<%= listing._id %>">Cancel</a>
+        </div>
+      </form>
+
+    </div>
+  </section>
+
 </div>
