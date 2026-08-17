@@ -240,12 +240,69 @@
     });
   }
 
+  /* ---- 7. Image fade-in --------------------------------------------------
+
+     Photos arrive band-by-band as they decode, which reads as jitter across
+     a 28-card grid. Hold them at opacity 0 and reveal each once it is
+     actually ready. Cached images report complete straight away.
+     ------------------------------------------------------------------------ */
+
+  function initImages() {
+    const imgs = document.querySelectorAll(".n-card__media, .n-matte__media");
+
+    imgs.forEach((img) => {
+      const ready = () => img.classList.add("is-ready");
+
+      if (img.complete && img.naturalWidth > 0) {
+        ready();
+        return;
+      }
+
+      img.addEventListener("load", ready, { once: true });
+      // A broken image must still reveal, or the card sits blank forever.
+      img.addEventListener("error", ready, { once: true });
+    });
+  }
+
+  /* ---- 8. Nav ground on scroll ------------------------------------------
+
+     The pill is glass. Over a hero photo it has something to refract; over
+     the flat page canvas it does not, so it needs its own ground once the
+     hero is behind it.
+     ------------------------------------------------------------------------ */
+
+  function initNavScroll() {
+    const pill = document.getElementById("navPill");
+    if (!pill) return;
+
+    let ticking = false;
+
+    function sync() {
+      pill.classList.toggle("is-stuck", window.scrollY > 120);
+      ticking = false;
+    }
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(sync);
+      },
+      { passive: true }
+    );
+
+    sync();
+  }
+
   /* ---- boot -------------------------------------------------------------- */
 
   function boot() {
     initTheme();
     initNav();
     initFlash();
+    initImages();
+    initNavScroll();
     initReveals();
     initMattes();
     initPillbars();

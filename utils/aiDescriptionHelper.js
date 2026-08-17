@@ -37,12 +37,37 @@ STRICT RULES:
 Now write the property description:
 `;
 
+  // Gemini returns 503 when the model is momentarily oversubscribed. That is
+  // not a real failure — the same request usually succeeds a second later —
+  // so retry it a couple of times before giving up. 429 (quota) is NOT
+  // retried: that one means stop asking.
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
     });
 
-    const result = await model.generateContent(prompt);
+    let result;
+    const MAX_ATTEMPTS = 3;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        result = await model.generateContent(prompt);
+        break;
+      } catch (err) {
+        const overloaded = err.status === 503 || err.status === 500;
+        if (!overloaded || attempt === MAX_ATTEMPTS) throw err;
+
+        // Back off a little further each time: 0.8s, then 1.6s.
+        const wait = 800 * attempt;
+        console.warn(
+          `Gemini busy (${err.status}), retry ${attempt}/${MAX_ATTEMPTS - 1} in ${wait}ms`
+        );
+        await sleep(wait);
+      }
+    }
+
     const description = result.response.text().trim();
 
     return {
@@ -62,6 +87,15 @@ Now write the property description:
         success: false,
         reason: "QUOTA_EXCEEDED",
         message: "Daily AI description limit reached. Please try again later."
+      };
+    }
+
+    //  MODEL OVERLOADED — survived all retries
+    if (error.status === 503 || error.status === 500) {
+      return {
+        success: false,
+        reason: "MODEL_BUSY",
+        message: "The AI is busy right now. Try again in a few seconds."
       };
     }
 

@@ -11,7 +11,9 @@
        the price pinned top-right and the byline under the title. -->
   <section class="n-matte n-matte--neem n-matte--lead" data-parallax>
     <% if (listing.image && listing.image.url) { %>
-      <img class="n-matte__media" src="<%= listing.image.url %>" alt="<%= listing.title %>">
+      <img class="n-matte__media listing-photo" src="<%= listing.image.url %>"
+           alt="<%= listing.title %>" fetchpriority="high"
+           style="view-transition-name: photo-<%= listing._id %>">
     <% } %>
 
     <span class="n-matte__tag">

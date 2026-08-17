@@ -89,14 +89,24 @@
   const descriptionField = document.getElementById("description");
   const toast = document.getElementById("ai-toast");
 
-  function showAiToast() {
+  const toastTitle = toast.querySelector(".ai-toast-title");
+  const toastMessage = toast.querySelector(".ai-toast-message");
+  let toastTimer;
+
+  // Every failure path shows this. Previously only QUOTA_EXCEEDED did, so a
+  // dead API key or an unreachable server looked like "nothing happened".
+  function showAiToast(title, message) {
+    toastTitle.textContent = title;
+    toastMessage.textContent = message;
+
+    clearTimeout(toastTimer);
     toast.classList.remove("hidden");
     requestAnimationFrame(() => toast.classList.add("show"));
 
-    setTimeout(() => {
+    toastTimer = setTimeout(() => {
       toast.classList.remove("show");
       setTimeout(() => toast.classList.add("hidden"), 300);
-    }, 5000);
+    }, 6000);
   }
 
   generateBtn.addEventListener("click", async () => {
@@ -106,8 +116,10 @@
     const price = document.getElementById("price").value.trim();
 
     if (!title || !location || !country || !price) {
-      btnText.innerText = "Fill title, location, country and price first";
-      setTimeout(() => { btnText.innerText = "Write it with AI"; }, 2600);
+      showAiToast(
+        "Missing details",
+        "Fill in the title, location, country and price first — the AI writes from those."
+      );
       return;
     }
 
@@ -121,16 +133,35 @@
         body: JSON.stringify({ title, location, country, price }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch (e) {
+        // Server returned an error page rather than JSON.
+        data = {};
+      }
 
-      if (data.success) {
+      if (res.ok && data.success) {
         descriptionField.value = data.description;
-      } else if (data.reason === "QUOTA_EXCEEDED") {
-        showAiToast();
+        descriptionField.focus();
+      } else if (res.status === 429 || data.reason === "QUOTA_EXCEEDED") {
+        showAiToast(
+          "AI limit reached",
+          "Nivasa has hit its daily AI usage limit. Write the description yourself, or try again tomorrow."
+        );
+      } else {
+        showAiToast(
+          "Could not generate",
+          (data && data.message) ||
+            "The AI service did not respond. Write the description yourself, or try again in a moment."
+        );
       }
     } catch (err) {
       console.error(err);
-      showAiToast();
+      showAiToast(
+        "No connection",
+        "Could not reach the server. Check your connection and try again."
+      );
     } finally {
       // Cooldown to avoid quota abuse
       setTimeout(() => {
