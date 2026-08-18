@@ -82,9 +82,8 @@
       <% allListings.forEach(function (listing) { %>
         <a class="n-card n-reveal" href="/listings/<%= listing._id %>">
           <% if (listing.image && listing.image.url) { %>
-            <img class="n-card__media listing-photo" src="<%= listing.image.url %>"
-                 alt="<%= listing.title %>" loading="lazy" decoding="async"
-                 style="view-transition-name: photo-<%= listing._id %>">
+            <img class="n-card__media" src="<%= listing.image.url %>"
+                 alt="<%= listing.title %>" loading="lazy">
           <% } %>
           <div class="n-card__body">
             <span class="n-card__title"><%= listing.title %></span>
