@@ -3,7 +3,7 @@ const router = express.Router();
 const wrapAsync = require("../utils/wrapAsync.js");
 const Listing = require("../models/listing.js");
 const multer = require("multer");
-const { isLoggedIn, isOwner, validateListing } = require("../middleware.js");
+const { isLoggedIn, isLoggedInApi, isOwner, validateListing, rateLimit } = require("../middleware.js");
 const listingController = require("../controllers/listing");
 const mongoose = require("mongoose");
 
@@ -40,7 +40,14 @@ router.get("/new", isLoggedIn, wrapAsync(listingController.renderNewForm));
 // Show form to edit a specific listing
 router.get("/:id/edit", isLoggedIn, isOwner, wrapAsync(listingController.renderEditForm));
 
-router.post("/generate-description", wrapAsync(async (req, res) => {
+// Every call here costs money at the LLM provider. The route was open to the
+// internet, so anyone could loop it and run up the bill. Login pins each call to
+// a real account, and the limiter caps what one account can spend per hour.
+router.post(
+  "/generate-description",
+  isLoggedInApi,
+  rateLimit({ keyPrefix: "gen-desc", max: 10, windowSec: 3600 }),
+  wrapAsync(async (req, res) => {
   const { title, location, country, price } = req.body;
 
   if (!title || !location || !country || !price) {
@@ -69,7 +76,8 @@ router.post("/generate-description", wrapAsync(async (req, res) => {
 
   // Success
   res.json(result);
-}));
+  })
+);
 
 
 

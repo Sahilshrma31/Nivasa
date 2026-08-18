@@ -145,9 +145,15 @@
         descriptionField.value = data.description;
         descriptionField.focus();
       } else if (res.status === 429 || data.reason === "QUOTA_EXCEEDED") {
+        // 429 now covers two cases: the provider's daily quota, and this
+        // account's own hourly cap from the rate limiter. The limiter sends
+        // its own message, so prefer that when it is there.
         showAiToast(
           "AI limit reached",
-          "Nivasa has hit its daily AI usage limit. Write the description yourself, or try again tomorrow."
+          data.reason === "QUOTA_EXCEEDED"
+            ? "Nivasa has hit its daily AI usage limit. Write the description yourself, or try again tomorrow."
+            : (data && data.message) ||
+              "You have generated a lot of descriptions recently. Try again in a little while."
         );
       } else {
         showAiToast(

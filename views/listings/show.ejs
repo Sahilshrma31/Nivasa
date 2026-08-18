@@ -181,12 +181,12 @@
       button.textContent = "Processing...";
 
       try {
-        const amount = <%= JSON.stringify(listing.price) %>;
-
+        // Only the id goes up. The server reads the price off the listing so a
+        // tampered amount here cannot change what gets charged.
         const res = await fetch("/payments/create-order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount }),
+          body: JSON.stringify({ listingId: "<%= listing._id %>" }),
         });
 
         if (!res.ok) throw new Error("Failed to create order");
@@ -209,6 +209,9 @@
                   listingId: "<%= listing._id %>",
                   razorpayPaymentId: response.razorpay_payment_id,
                   razorpayOrderId: response.razorpay_order_id,
+                  // The server recomputes this signature to confirm Razorpay
+                  // really took the payment.
+                  razorpaySignature: response.razorpay_signature,
                 }),
               });
 

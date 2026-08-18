@@ -287,6 +287,19 @@ module.exports.updateListing = async (req, res) => {
 
   await Listing.findByIdAndUpdate(id, listingData);
 
+  // Both cache entries hold a copy of this listing, so both go stale on edit:
+  // "listings:all" for the index grid and "listing:<id>" for the detail page.
+  // Without this, an edited price kept serving the old value until the 60s TTL
+  // expired — long enough for someone to book at a price the host had changed.
+  if (redis) {
+    try {
+      await redis.del("listings:all");
+      await redis.del(`listing:${id}`);
+    } catch {
+      console.log("Redis invalidation skipped after update");
+    }
+  }
+
   req.flash("success", "Listing updated successfully.");
   res.redirect(`/listings/${id}`);
 };
