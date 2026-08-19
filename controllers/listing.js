@@ -2,6 +2,7 @@ const Listing = require("../models/listing");
 const Booking = require("../models/booking");
 const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
 const redis = require("../config/redis");
+const { currentVersion, bumpVersion, pageKey } = require("../utils/listingCache");
 const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
 
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
@@ -11,22 +12,31 @@ const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
 /* Show all listings */
+const PAGE_SIZE = 12;
+
 module.exports.index = async (req, res) => {
   const startTime = Date.now();
 
   try {
     const { search, minPrice, maxPrice, sort } = req.query;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const skip = (page - 1) * PAGE_SIZE;
 
     const hasQuery = search || minPrice || maxPrice || sort;
 
     let allListings;
+    let total;
 
     // CASE 1: SEARCH / SORT / FILTER → ALWAYS DB
     if (hasQuery) {
       let query = {};
 
+      // $text uses the title/location/country index on the model. The previous
+      // $regex could not use an index, and passing user input into a regex also
+      // let a crafted pattern burn CPU. The trade-off is that $text matches
+      // whole words, so "villa" finds "Beach Villa" but "vil" no longer does.
       if (search) {
-        query.title = { $regex: search, $options: "i" };
+        query.$text = { $search: search };
       }
 
       if (minPrice || maxPrice) {
@@ -43,18 +53,27 @@ module.exports.index = async (req, res) => {
         dbQuery = dbQuery.sort({ price: -1 });
       }
 
-      allListings = await dbQuery;
+      // One page at a time. Returning the whole collection was fine at twenty
+      // listings and would have meant a several-megabyte response at twenty
+      // thousand.
+      [allListings, total] = await Promise.all([
+        dbQuery.skip(skip).limit(PAGE_SIZE),
+        Listing.countDocuments(query),
+      ]);
     }
 
     // CASE 2: SIMPLE LISTING PAGE → TRY REDIS
     else {
-      const CACHE_KEY = "listings:all";
+      const version = await currentVersion();
+      const CACHE_KEY = version === null ? null : pageKey(version, page);
 
-      if (redis) {
+      if (CACHE_KEY) {
         try {
-          const cachedListings = await redis.get(CACHE_KEY);
-          if (cachedListings) {
-            allListings = JSON.parse(cachedListings);
+          const cached = await redis.get(CACHE_KEY);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            allListings = parsed.listings;
+            total = parsed.total;
           }
         } catch (err) {
           console.log("Redis read failed, using DB");
@@ -62,11 +81,17 @@ module.exports.index = async (req, res) => {
       }
 
       if (!allListings) {
-        allListings = await Listing.find({});
+        [allListings, total] = await Promise.all([
+          Listing.find({}).skip(skip).limit(PAGE_SIZE),
+          Listing.estimatedDocumentCount(),
+        ]);
 
-        if (redis) {
+        if (CACHE_KEY) {
           try {
-            await redis.set(CACHE_KEY, JSON.stringify(allListings), "EX", 60);
+            // Jitter on the TTL so that pages cached together do not all expire
+            // in the same second and send every reader to the database at once.
+            const ttl = 60 + Math.floor(Math.random() * 30);
+            await redis.set(CACHE_KEY, JSON.stringify({ listings: allListings, total }), "EX", ttl);
           } catch (err) {
             console.log("Redis write skipped");
           }
@@ -76,8 +101,13 @@ module.exports.index = async (req, res) => {
 
     let bookedListings = [];
     if (req.user) {
-      bookedListings = await Booking.find({ user: req.user._id }).populate("listing");
+      bookedListings = await Booking.find({
+        user: req.user._id,
+        status: { $ne: "cancelled" },
+      }).populate("listing");
     }
+
+    const totalPages = Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
 
     res.render("listings/index.ejs", {
       allListings,
@@ -86,7 +116,10 @@ module.exports.index = async (req, res) => {
       query: search || "",
       minPrice: minPrice || "",
       maxPrice: maxPrice || "",
-      sort: sort || ""
+      sort: sort || "",
+      page,
+      totalPages,
+      total: total || 0
     });
 
   } catch (err) {
@@ -173,11 +206,7 @@ module.exports.createListing = async (req, res) => {
 
     await newListing.save();
 
-    if (redis) {
-      try {
-        await redis.del("listings:all");
-      } catch {}
-    }
+    await bumpVersion();
 
     req.flash("success", "New listing created successfully.");
     res.redirect("/listings");
@@ -291,9 +320,9 @@ module.exports.updateListing = async (req, res) => {
   // "listings:all" for the index grid and "listing:<id>" for the detail page.
   // Without this, an edited price kept serving the old value until the 60s TTL
   // expired — long enough for someone to book at a price the host had changed.
+  await bumpVersion();
   if (redis) {
     try {
-      await redis.del("listings:all");
       await redis.del(`listing:${id}`);
     } catch {
       console.log("Redis invalidation skipped after update");
@@ -316,15 +345,39 @@ module.exports.renderNewForm = (req, res) => {
 };
 
 
+/* Render edit form */
+// routes/listing.js has always pointed at this name, but it was never written,
+// so every "Edit listing" link answered with "fn is not a function" and a 500.
+module.exports.renderEditForm = async (req, res) => {
+  const { id } = req.params;
+  const listing = await Listing.findById(id);
+
+  if (!listing) {
+    req.flash("error", "That listing no longer exists.");
+    return res.redirect("/listings");
+  }
+
+  res.render("listings/edit.ejs", {
+    listing,
+    // The form shows the current photo as a preview next to the file input.
+    originalImageUrl: listing.image && listing.image.url ? listing.image.url : null,
+    query: "",
+    minPrice: "",
+    maxPrice: "",
+    sort: ""
+  });
+};
+
+
 /* Delete listing */
 module.exports.destroyListing = async (req, res) => {
   const { id } = req.params;
 
   await Listing.findByIdAndDelete(id);
 
+  await bumpVersion();
   if (redis) {
     try {
-      await redis.del("listings:all");
       await redis.del(`listing:${id}`);
     } catch {}
   }

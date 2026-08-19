@@ -60,14 +60,36 @@
           <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE">
             <button class="n-btn n-btn--ghost" type="submit">Delete</button>
           </form>
-        <% } else if (hasBooked) { %>
-          <p class="n-label" style="color:var(--n-accent);">You have already booked this Nivasa</p>
         <% } else { %>
-          <form id="paymentForm">
-            <input type="hidden" name="amount" value="<%= listing.price %>">
-            <button type="button" class="n-btn" id="rzp-button">
-              Book now &mdash; &#8377;<%= listing.price.toLocaleString("en-IN") %>
-            </button>
+          <%
+            // A guest who has stayed here before may book again for other
+            // dates, so a past booking is a note rather than a blocker.
+            const today = new Date().toISOString().slice(0, 10);
+          %>
+          <form id="paymentForm" style="display:grid; gap:0.75rem; width:100%; max-width:26rem;">
+            <% if (hasBooked) { %>
+              <p class="n-label" style="color:var(--n-accent);">You have booked this Nivasa before</p>
+            <% } %>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+              <div class="n-field">
+                <label class="n-label" for="checkIn">Check in</label>
+                <input class="n-input" type="date" id="checkIn" name="checkIn"
+                       min="<%= today %>" required>
+              </div>
+              <div class="n-field">
+                <label class="n-label" for="checkOut">Check out</label>
+                <input class="n-input" type="date" id="checkOut" name="checkOut"
+                       min="<%= today %>" required>
+              </div>
+            </div>
+
+            <p class="n-body" id="stay-summary" data-price="<%= listing.price %>"
+               style="margin:0; min-height:1.4em;">
+              &#8377;<%= listing.price.toLocaleString("en-IN") %> per night
+            </p>
+
+            <button type="button" class="n-btn" id="rzp-button">Book now</button>
           </form>
         <% } %>
       </div>
@@ -173,6 +195,54 @@
 <script>
   const paymentForm = document.getElementById("paymentForm");
   const button = document.getElementById("rzp-button");
+  const checkIn = document.getElementById("checkIn");
+  const checkOut = document.getElementById("checkOut");
+  const staySummary = document.getElementById("stay-summary");
+
+  const NIGHTLY = staySummary ? Number(staySummary.dataset.price) : 0;
+  const MS_PER_NIGHT = 24 * 60 * 60 * 1000;
+
+  function resetButton() {
+    if (!button) return;
+    button.disabled = false;
+    button.textContent = "Book now";
+  }
+
+  // Mirrors the server's arithmetic so the guest sees the same total before
+  // the payment sheet opens. The server still recomputes it — this is display
+  // only and is never sent.
+  function updateSummary() {
+    if (!staySummary || !checkIn || !checkOut) return;
+
+    const inr = (n) => "\u20B9" + n.toLocaleString("en-IN");
+
+    if (!checkIn.value || !checkOut.value) {
+      staySummary.textContent = inr(NIGHTLY) + " per night";
+      return;
+    }
+
+    // Check-out cannot precede check-in, so keep the picker honest as soon as
+    // a check-in date is chosen.
+    checkOut.min = checkIn.value;
+
+    const nights = Math.round(
+      (new Date(checkOut.value) - new Date(checkIn.value)) / MS_PER_NIGHT
+    );
+
+    if (nights < 1) {
+      staySummary.textContent = "Check-out must be after check-in.";
+      return;
+    }
+
+    staySummary.textContent =
+      inr(NIGHTLY) + " \u00D7 " + nights + (nights === 1 ? " night" : " nights") +
+      " = " + inr(NIGHTLY * nights);
+  }
+
+  if (checkIn && checkOut) {
+    checkIn.addEventListener("change", updateSummary);
+    checkOut.addEventListener("change", updateSummary);
+  }
 
   if (button) {
     button.onclick = async function (e) {
@@ -181,17 +251,33 @@
       button.textContent = "Processing...";
 
       try {
-        // Only the id goes up. The server reads the price off the listing so a
-        // tampered amount here cannot change what gets charged.
+        if (!checkIn.value || !checkOut.value) {
+          alert("Pick your check-in and check-out dates first.");
+          resetButton();
+          return;
+        }
+
+        // Only ids and dates go up. Price comes off the listing on the server
+        // and the night count from the dates, so nothing here can change what
+        // gets charged.
         const res = await fetch("/payments/create-order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ listingId: "<%= listing._id %>" }),
+          body: JSON.stringify({
+            listingId: "<%= listing._id %>",
+            checkIn: checkIn.value,
+            checkOut: checkOut.value,
+          }),
         });
 
-        if (!res.ok) throw new Error("Failed to create order");
-
         const order = await res.json();
+
+        if (!res.ok) {
+          // 409 means the dates went while the guest was deciding.
+          alert(order.error || "Failed to create order");
+          resetButton();
+          return;
+        }
 
         const options = {
           key: "<%= razorpayKeyId %>",
@@ -205,20 +291,23 @@
               const bookingRes = await fetch("/bookings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                // Just the proof of payment. Which listing and which dates
+                // were bought is read back off the Razorpay order server-side.
                 body: JSON.stringify({
-                  listingId: "<%= listing._id %>",
                   razorpayPaymentId: response.razorpay_payment_id,
                   razorpayOrderId: response.razorpay_order_id,
-                  // The server recomputes this signature to confirm Razorpay
-                  // really took the payment.
                   razorpaySignature: response.razorpay_signature,
                 }),
               });
 
+              const bookingData = await bookingRes.json().catch(() => ({}));
+
               if (bookingRes.ok) {
                 window.location.href = "/bookings/mine";
               } else {
-                alert("Payment successful but booking failed. Please contact support.");
+                alert(bookingData.message ||
+                  "Payment successful but booking failed. Please contact support.");
+                resetButton();
               }
             } catch (error) {
               console.error("Booking error:", error);
@@ -233,8 +322,7 @@
           theme: { color: "#D9552F" },
           modal: {
             ondismiss: function () {
-              button.disabled = false;
-              button.textContent = "Book now — ₹<%= listing.price.toLocaleString('en-IN') %>";
+              resetButton();
             }
           }
         };
@@ -245,8 +333,7 @@
       } catch (error) {
         console.error("Payment error:", error);
         alert("Failed to initiate payment. Please try again.");
-        button.disabled = false;
-        button.textContent = "Book now — ₹<%= listing.price.toLocaleString('en-IN') %>";
+        resetButton();
       }
     };
   }

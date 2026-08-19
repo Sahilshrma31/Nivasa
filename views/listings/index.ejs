@@ -5,6 +5,22 @@
   const minP  = typeof minPrice !== "undefined" ? minPrice : "";
   const maxP  = typeof maxPrice !== "undefined" ? maxPrice : "";
   const srt   = typeof sort     !== "undefined" ? sort     : "";
+  const pg    = typeof page       !== "undefined" ? page       : 1;
+  const pages = typeof totalPages !== "undefined" ? totalPages : 1;
+  const count = typeof total      !== "undefined" ? total      : (allListings ? allListings.length : 0);
+
+  // Page links have to carry the active filters, or paging would silently
+  // drop them and show page 2 of everything.
+  const pageHref = (n) => {
+    const p = new URLSearchParams();
+    if (q)    p.set("search", q);
+    if (minP) p.set("minPrice", minP);
+    if (maxP) p.set("maxPrice", maxP);
+    if (srt)  p.set("sort", srt);
+    if (n > 1) p.set("page", n);
+    const qs = p.toString();
+    return "/listings" + (qs ? "?" + qs : "");
+  };
   const hero  = (allListings && allListings.length && allListings[0].image && allListings[0].image.url)
                   ? allListings[0].image.url : null;
 %>
@@ -96,6 +112,21 @@
         </a>
       <% }); %>
     </div>
+
+    <% if (pages > 1) { %>
+      <nav class="n-section n-reveal" aria-label="Pagination"
+           style="display:flex; justify-content:center; align-items:center; gap:1rem; flex-wrap:wrap;">
+        <% if (pg > 1) { %>
+          <a class="n-btn n-btn--ghost" href="<%= pageHref(pg - 1) %>" rel="prev">&larr; Previous</a>
+        <% } %>
+
+        <span class="n-label">Page <%= pg %> of <%= pages %> &nbsp;·&nbsp; <%= count %> stays</span>
+
+        <% if (pg < pages) { %>
+          <a class="n-btn n-btn--ghost" href="<%= pageHref(pg + 1) %>" rel="next">Next &rarr;</a>
+        <% } %>
+      </nav>
+    <% } %>
   <% } %>
 
 </div>

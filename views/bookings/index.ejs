@@ -1,4 +1,15 @@
 <% layout("layouts/boilerplate") -%>
+<%
+  // Bookings made before the schema carried dates have none, so fall back to
+  // the day they were created rather than printing "Invalid Date".
+  const fmt = (d) => new Date(d).toLocaleDateString("en-IN",
+    { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+
+  const stay = (b) => b.checkIn && b.checkOut
+    ? fmt(b.checkIn) + " \u2192 " + fmt(b.checkOut) +
+      "  \u00B7  " + b.nights + (b.nights === 1 ? " night" : " nights")
+    : "Booked " + fmt(b.createdAt);
+%>
 
 <div class="n-wide">
 
@@ -30,7 +41,7 @@
                 &nbsp;·&nbsp; &#8377;<%= booking.listing.price.toLocaleString("en-IN") %>
               </span>
               <span class="n-card__meta" style="opacity:0.7;">
-                Booked <%= booking.createdAt.toDateString() %>
+                <%= stay(booking) %>
               </span>
             </div>
           </a>
@@ -43,7 +54,7 @@
           <% bookings.forEach(function (booking) { %>
             <div class="n-review" style="flex-direction:row; align-items:center; justify-content:space-between; gap:var(--n-s4);">
               <div class="n-kv">
-                <span class="n-kv__k"><%= booking.createdAt.toDateString() %></span>
+                <span class="n-kv__k"><%= stay(booking) %></span>
                 <span class="n-kv__v" style="font-size:1.0625rem;">
                   <%= booking.listing ? booking.listing.title : "Listing no longer available" %>
                 </span>

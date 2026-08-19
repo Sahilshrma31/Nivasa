@@ -45,6 +45,14 @@ const listingSchema=new Schema({
 });
 
 
+// Backs the search box. A $text query uses this index; the previous
+// case-insensitive $regex could not use any index and scanned the whole
+// collection on every search.
+listingSchema.index({ title: "text", location: "text", country: "text" });
+
+// Price filtering and the two price sorts read straight off this.
+listingSchema.index({ price: 1 });
+
 listingSchema.post("findOneAndDelete", async (listing) => { // Post middleware after a listing is deleted
     if (listing) { // Only run if a listing was actually found and deleted
       await Review.deleteMany({ _id: { $in: listing.reviews } }); // Delete all reviews whose _id is in the deleted listing's reviews array
