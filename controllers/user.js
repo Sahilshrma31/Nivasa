@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const { issueToken, revokeToken } = require("../utils/auth");
 
 // Show the signup form
 module.exports.renderSignUp = (req, res) => {
@@ -11,14 +12,10 @@ module.exports.signUp = async (req, res) => {
         let { username, email, password } = req.body;
         const newUser = new User({ email, username });
         const registeredUser = await User.register(newUser, password);
-        console.log(registeredUser);
-        req.login(registeredUser, (err) => {
-            if (err) {
-                return next(err);
-            }
-            req.flash("success", "welcome to Nivasa");
-            res.redirect("/listings");
-        });
+        // Signed in straight away: same JWT cookie a normal login gets.
+        issueToken(res, registeredUser);
+        req.flash("success", "welcome to Nivasa");
+        res.redirect("/listings");
     } catch (e) {
         req.flash("error", e.message);
         res.redirect("/signup");
@@ -30,20 +27,17 @@ module.exports.renderLoginForm = (req, res) => {
     res.render("users/login.ejs");
 };
 
-// Handle user login success redirect
+// Runs after passport has checked the password and set req.user.
 module.exports.login = async (req, res) => {
+    issueToken(res, req.user);
     req.flash("success", "Welcome back to Nivasa!");
     const redirectUrl = res.locals.redirect || "/listings";
     res.redirect(redirectUrl);
 };
 
 // Handle user logout
-module.exports.logout = (req, res) => {
-    req.logout((err) => {
-        if (err) {
-            return next(err);
-        }
-        req.flash("success", "You are logged out now!");
-        res.redirect("/listings");
-    });
+module.exports.logout = async (req, res) => {
+    await revokeToken(req, res);
+    req.flash("success", "You are logged out now!");
+    res.redirect("/listings");
 };

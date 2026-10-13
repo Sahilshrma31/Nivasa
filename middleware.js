@@ -4,19 +4,28 @@ const ExpressError = require("./utils/ExpressError");
 const Review = require("./models/review.js");
 const redis = require("./config/redis");
 
+// Where to send someone after they log in. There is no session to park it in
+// any more, so it rides in a short-lived cookie of its own.
+const RETURN_COOKIE = "returnTo";
+const returnCookieOptions = { httpOnly: true, sameSite: "lax", path: "/", maxAge: 10 * 60 * 1000 };
+
+// Only same-site paths. "//evil.com" and "/\evil.com" are read by browsers as
+// another host, so a crafted cookie value could otherwise turn login into an
+// open redirect.
+const isSafePath = (url) =>
+    typeof url === "string" && url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\");
+
 // Middleware to check if user is logged in
 module.exports.isLoggedIn = (req, res, next) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
+        let redirectUrl;
         if (req.method === "GET") {
-            req.session.redirectUrl = req.originalUrl;
+            redirectUrl = req.originalUrl;
         } else if (req.method === "POST" || req.method === "DELETE") {
             const { id } = req.params;
-            if (id) {
-                req.session.redirectUrl = `/listings/${id}`;
-            } else {
-                req.session.redirectUrl = "/listings";
-            }
+            redirectUrl = id ? `/listings/${id}` : "/listings";
         }
+        if (redirectUrl) res.cookie(RETURN_COOKIE, redirectUrl, returnCookieOptions);
         req.flash("error", "You must be logged in first!");
         return res.redirect("/login");
     }
@@ -27,7 +36,7 @@ module.exports.isLoggedIn = (req, res, next) => {
 // Those callers want a status code they can branch on, not a 302 to /login
 // that fetch silently follows and hands back as a 200 page of HTML.
 module.exports.isLoggedInApi = (req, res, next) => {
-    if (!req.isAuthenticated()) {
+    if (!req.user) {
         return res.status(401).json({ success: false, message: "You must be logged in." });
     }
     next();
@@ -63,8 +72,10 @@ module.exports.rateLimit = ({ keyPrefix, max, windowSec }) => {
 
 // Middleware to save the redirect URL after login
 module.exports.saveRedirectUrl = (req, res, next) => {
-    if (req.session.redirectUrl) {
-        res.locals.redirect = req.session.redirectUrl;
+    const url = req.cookies && req.cookies[RETURN_COOKIE];
+    if (url) {
+        if (isSafePath(url)) res.locals.redirect = url;
+        res.clearCookie(RETURN_COOKIE, { path: "/" });
     }
     next();
 };

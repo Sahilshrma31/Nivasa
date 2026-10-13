@@ -18,6 +18,7 @@ router.route("/login")
   .post(
     saveRedirectUrl,
     passport.authenticate("local", {
+      session: false, // no session: the controller issues a JWT instead
       failureRedirect: "/login",
       failureFlash: true
     }),
@@ -25,6 +26,6 @@ router.route("/login")
   );
 
 // logout route
-router.get("/logout", userController.logout); // handle logout
+router.get("/logout", wrapAsync(userController.logout)); // handle logout
 
 module.exports = router;

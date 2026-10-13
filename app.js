@@ -13,11 +13,11 @@ const methodOverride = require("method-override"); // PUT/DELETE HTTP methods ko
 const ejsMate = require("ejs-mate"); // EJS layouts & partials support
 const wrapAsync = require("./utils/wrapAsync.js"); // Async route error handling wrapper
 const reviewRouter = require("./routes/review.js"); // Reviews related routes
-const session = require("express-session"); // Session middleware for user login persistence
-const MongoStore = require('connect-mongo'); // Session store in MongoDB
+const cookieParser = require("cookie-parser"); // Reads cookies (JWT + flash) into req.cookies
 const listingRouter = require("./routes/listing.js"); // Listings related routes
-const flash = require("connect-flash"); // Temporary success/error messages
-const passport = require("passport"); // Authentication library
+const cookieFlash = require("./utils/flash"); // Temporary success/error messages, kept in a cookie
+const { authenticate } = require("./utils/auth"); // JWT check on every request -> req.user
+const passport = require("passport"); // Authentication library (only checks the password at login)
 const LocalStrategy = require("passport-local"); // Username/password based authentication strategy
 const User = require("./models/user.js"); // User model import for auth
 const userRouter = require("./routes/user.js"); // Authentication routes
@@ -37,14 +37,6 @@ main()
 
 async function main() { await mongoose.connect(dbUrl); } // Async DB connect function
 
-// ---------------------- Session Store in MongoDB ----------------------
-const store = MongoStore.create({ // Session store create
-  mongoUrl: dbUrl, // Database URL
-  crypto: { secret: process.env.SECRET }, // Encrypt session data
-  touchAfter: 24 * 3600, // Session ko sirf 24 hours baad update kare
-});
-store.on("error", (error) => { console.log("Error in MONGO SESSION STORE", error); }); // Store error handling
-
 // ---------------------- View Engine Setup ----------------------
 app.set("view engine", "ejs"); // Template engine set
 app.set("views", path.join(__dirname, "views")); // Views folder path set
@@ -54,35 +46,21 @@ app.engine("ejs", ejsMate); // EJS layouts engine enable
 app.use(express.json()); // JSON request parsing
 app.use(express.static(path.join(__dirname, "/public"))); // Public folder serve for static files
 
-// ---------------------- Session Configuration ----------------------
-const sessionoptions = {
-  store, // MongoDB session store
-  secret: process.env.SECRET, // Session secret from env
-  resave: false, // Har request pe session save mat karo
-  saveUninitialized: true, // Blank sessions bhi save ho
-  cookie: {
-    expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // Expire in 7 days
-    maxAge: 7 * 24 * 60 * 60 * 1000, // Max age 7 days
-    httpOnly: true, // JS se cookie access na ho (security)
-  },
-};
-
 // ---------------------- Root Route ----------------------
 app.get("/", (req, res) => { res.redirect("/listings"); }); // Root se listings page redirect
 
 // ---------------------- Middleware Setup ----------------------
-app.use(session(sessionoptions)); // Session enable
-app.use(flash()); // Flash messages enable
-app.use(passport.initialize()); // Passport auth initialize
-app.use(passport.session()); // Persistent login enable
+// No server-side sessions: login state is a JWT in an httpOnly cookie, so the
+// app keeps nothing per user in memory or in a session store.
+app.use(cookieParser()); // req.cookies
+app.use(cookieFlash); // req.flash() backed by a short-lived cookie
+app.use(passport.initialize()); // Passport, used only to verify the password at login
+app.use(authenticate); // Verify JWT cookie -> req.user (null when logged out)
 
 // ---------------------- Passport Local Auth Strategy ----------------------
-passport.use(new LocalStrategy(User.authenticate())); // LocalStrategy with User model
-passport.serializeUser(User.serializeUser()); // User ko session me store kare
-passport.deserializeUser(User.deserializeUser()); // Session se user retrieve kare
+passport.use(new LocalStrategy(User.authenticate())); // Username + password check (hash compare)
 
 // ---------------------- Pass User & Flash Messages to Templates ----------------------
-app.use((req, res, next) => { res.locals.currUser = req.user; next(); }); // Current user har template me available
 app.use((req, res, next) => {
   res.locals.success = req.flash("success"); // Success msg global
   res.locals.error = req.flash("error"); // Error msg global
