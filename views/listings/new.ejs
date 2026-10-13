@@ -23,18 +23,6 @@
         </div>
 
         <div class="n-field">
-          <label class="n-field__label" for="description">Description</label>
-          <textarea class="n-field__input" name="listing[description]" id="description"
-                    rows="5" placeholder="What makes this place worth the trip?" required></textarea>
-          <div class="invalid-feedback">Description is required</div>
-          <button type="button" id="generateBtn" class="n-btn n-btn--ghost"
-                  style="align-self:flex-start; margin-top:var(--n-s3);">
-            <span class="ai-generate-btn__stars" aria-hidden="true">&#10022;</span>
-            <span class="ai-generate-btn__text">Write it with AI</span>
-          </button>
-        </div>
-
-        <div class="n-field">
           <label class="n-field__label" for="image">Listing image</label>
           <input class="n-field__input" name="listing[image]" id="image" type="file" required>
           <div class="invalid-feedback">An image is required</div>
@@ -61,6 +49,42 @@
                    placeholder="India" required>
             <div class="invalid-feedback">Country is required</div>
           </div>
+        </div>
+
+        <!-- Below price and location on purpose: the AI writes from those.
+             Highlights and tone have no name attribute, so they go to the AI
+             only and are never submitted with the listing. -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(14rem,1fr)); gap:var(--n-s5); align-items:start;">
+          <div class="n-field">
+            <label class="n-field__label" for="aiHighlights">Key highlights for AI (optional)</label>
+            <textarea class="n-field__input" id="aiHighlights" rows="3" maxlength="400"
+                      style="min-height:5rem;"
+                      placeholder="2 bedrooms, fast wifi, balcony with snow view, 5 min walk to Mall Road, pets allowed"></textarea>
+          </div>
+
+          <div class="n-field">
+            <label class="n-field__label" for="aiTone">Tone</label>
+            <select class="n-field__input" id="aiTone">
+              <option value="auto" selected>Auto (from price)</option>
+              <option value="cozy">Cozy</option>
+              <option value="luxury">Luxury</option>
+              <option value="budget">Budget-friendly</option>
+              <option value="family">Family</option>
+              <option value="workcation">Workcation</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="n-field">
+          <label class="n-field__label" for="description">Description</label>
+          <textarea class="n-field__input" name="listing[description]" id="description"
+                    rows="5" placeholder="What makes this place worth the trip?" required></textarea>
+          <div class="invalid-feedback">Description is required</div>
+          <button type="button" id="generateBtn" class="n-btn n-btn--ghost"
+                  style="align-self:flex-start; margin-top:var(--n-s3);">
+            <span class="ai-generate-btn__stars" aria-hidden="true">&#10022;</span>
+            <span class="ai-generate-btn__text">Write it with AI</span>
+          </button>
         </div>
 
         <div><button class="n-btn" type="submit">Add listing</button></div>
@@ -114,6 +138,8 @@
     const location = document.getElementById("location").value.trim();
     const country = document.getElementById("country").value.trim();
     const price = document.getElementById("price").value.trim();
+    const highlights = document.getElementById("aiHighlights").value.trim();
+    const tone = document.getElementById("aiTone").value;
 
     if (!title || !location || !country || !price) {
       showAiToast(
@@ -130,7 +156,7 @@
       const res = await fetch("/listings/generate-description", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, location, country, price }),
+        body: JSON.stringify({ title, location, country, price, highlights, tone }),
       });
 
       let data = {};

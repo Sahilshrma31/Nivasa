@@ -203,12 +203,21 @@ module.exports.createListing = async (req, res) => {
     const listingData = req.body.listing;
 
     if (!listingData.description || listingData.description.trim() === "") {
-      listingData.description = await generateSmartDescription(
-        listingData.title,
-        listingData.location,
-        listingData.country,
-        listingData.price
-      );
+      // The helper returns { success, description }, not a string. Assigning
+      // the whole object made Mongoose reject the save with a CastError.
+      const ai = await generateSmartDescription({
+        title: listingData.title,
+        location: listingData.location,
+        country: listingData.country,
+        price: listingData.price,
+      });
+
+      if (!ai.success) {
+        req.flash("error", "Add a description, or try generating one with AI again.");
+        return res.redirect("/listings/new");
+      }
+
+      listingData.description = ai.description;
     }
 
     if (req.file) {

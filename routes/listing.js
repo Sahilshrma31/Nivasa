@@ -9,7 +9,7 @@ const mongoose = require("mongoose");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
+const { generateSmartDescription, TONES, MAX_HIGHLIGHTS } = require("../utils/aiDescriptionHelper");
 const { getBookedRanges } = require("../utils/availability");
 const Booking = require("../models/booking.js");
 
@@ -50,7 +50,7 @@ router.post(
   isLoggedInApi,
   rateLimit({ keyPrefix: "gen-desc", max: 10, windowSec: 3600 }),
   wrapAsync(async (req, res) => {
-  const { title, location, country, price } = req.body;
+  const { title, location, country, price, highlights = "", tone = "auto" } = req.body;
 
   if (!title || !location || !country || !price) {
     return res.status(400).json({
@@ -59,12 +59,27 @@ router.post(
     });
   }
 
-  const result = await generateSmartDescription(
+  if (!Number.isFinite(Number(price)) || Number(price) < 0) {
+    return res.status(400).json({ success: false, message: "Price must be a valid number." });
+  }
+
+  // Everything here goes into the prompt, so it is capped: a long paste costs
+  // tokens on every call and gives a prompt-injection attempt more room.
+  if (typeof highlights !== "string" || highlights.length > MAX_HIGHLIGHTS) {
+    return res.status(400).json({
+      success: false,
+      message: `Keep the highlights under ${MAX_HIGHLIGHTS} characters.`
+    });
+  }
+
+  const result = await generateSmartDescription({
     title,
     location,
     country,
-    price
-  );
+    price,
+    highlights,
+    tone: Object.hasOwn(TONES, tone) ? tone : "auto",
+  });
 
   // Forward quota error clearly
   if (!result.success && result.reason === "QUOTA_EXCEEDED") {
