@@ -26,10 +26,7 @@ else
   return 0
 end`;
 
-async function withListingLock(listingId, fn) {
-  if (!redis) throw new LockUnavailableError("Booking is temporarily unavailable.");
-
-  const key = `lock:booking:${listingId}`;
+async function acquire(key) {
   const token = crypto.randomUUID();
 
   let acquired;
@@ -40,16 +37,63 @@ async function withListingLock(listingId, fn) {
   }
 
   if (!acquired) throw new LockBusyError("Someone else is booking these dates. Please try again.");
+  return token;
+}
+
+async function release(key, token) {
+  try {
+    await redis.eval(RELEASE, 1, key, token);
+  } catch {
+    // Nothing to do — the TTL will clear it.
+  }
+}
+
+// Hold several locks for one critical section.
+//
+// Confirming a booking asks two different questions: "is this listing free on
+// these dates?" and "is this guest already staying somewhere else then?". The
+// first is guarded by a lock on the listing, the second by a lock on the user,
+// and both answers have to stay true until the booking row exists.
+//
+// Keys are sorted before acquiring. Two requests that want the same pair of
+// locks therefore always take them in the same order, which is what stops
+// request A holding the listing while B holds the user and neither can finish.
+async function withLocks(keys, fn) {
+  if (!redis) throw new LockUnavailableError("Booking is temporarily unavailable.");
+
+  const ordered = [...new Set(keys)].sort();
+  const held = [];
 
   try {
+    for (const key of ordered) {
+      held.push([key, await acquire(key)]);
+    }
     return await fn();
   } finally {
-    try {
-      await redis.eval(RELEASE, 1, key, token);
-    } catch {
-      // Nothing to do — the TTL will clear it.
+    // Reverse order, so the lock taken last is given back first.
+    for (const [key, token] of held.reverse()) {
+      await release(key, token);
     }
   }
 }
 
-module.exports = { withListingLock, LockBusyError, LockUnavailableError, LOCK_TTL_MS };
+const listingKey = (listingId) => `lock:booking:${listingId}`;
+const userKey = (userId) => `lock:guest:${userId}`;
+
+function withListingLock(listingId, fn) {
+  return withLocks([listingKey(listingId)], fn);
+}
+
+// Used by the booking confirm, which must hold both.
+function withStayLock(listingId, userId, fn) {
+  return withLocks([listingKey(listingId), userKey(userId)], fn);
+}
+
+module.exports = {
+  withListingLock,
+  withStayLock,
+  withLocks,
+  LockBusyError,
+  LockUnavailableError,
+  LOCK_TTL_MS,
+};

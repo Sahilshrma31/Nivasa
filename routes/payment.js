@@ -4,7 +4,10 @@ const razorpay = require("../utils/razorpay");
 const Listing = require("../models/listing");
 const { isLoggedInApi } = require("../middleware");
 const { parseStay, StayDateError } = require("../utils/stayDates");
-const { findOverlappingBooking } = require("../utils/availability");
+const {
+  findOverlappingBooking,
+  findGuestOverlappingBooking,
+} = require("../utils/availability");
 
 // Create a Razorpay order for a stay.
 //
@@ -38,6 +41,21 @@ router.post("/create-order", isLoggedInApi, async (req, res) => {
     const clash = await findOverlappingBooking(listingId, stay.checkIn, stay.checkOut);
     if (clash) {
       return res.status(409).json({ error: "Those dates are already booked." });
+    }
+
+    // A guest cannot be in two places at once, so a stay they already hold
+    // anywhere else over these dates blocks this one. Also advisory — the
+    // binding check runs under a lock at confirm time.
+    const ownClash = await findGuestOverlappingBooking(
+      req.user._id,
+      stay.checkIn,
+      stay.checkOut
+    );
+    if (ownClash) {
+      const where = ownClash.listing ? ` at ${ownClash.listing.title}` : "";
+      return res.status(409).json({
+        error: `You already have a stay booked${where} over those dates.`,
+      });
     }
 
     const amount = Math.round(listing.price * 100) * stay.nights;

@@ -1192,3 +1192,161 @@ select.n-field__input option { background: var(--n-surface); color: var(--n-ink)
 .n-column  { max-width: var(--n-measure); margin-inline: auto; }
 .n-section { display: flex; flex-direction: column; gap: var(--n-s5); padding-block: var(--n-s7); }
 .n-center  { text-align: center; align-items: center; }
+
+
+/* --------------------------------------------------------------------------
+   Stay calendar
+   -------------------------------------------------------------------------- */
+
+.n-cal {
+    border: 1px solid var(--n-line);
+    border-radius: var(--n-card-radius);
+    background: var(--n-surface);
+    padding: var(--n-s4);
+    width: 100%;
+    max-width: 22rem;
+}
+
+.n-cal__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--n-s2);
+    margin-bottom: var(--n-s3);
+}
+
+.n-cal__month {
+    font-family: var(--n-font-display);
+    font-size: 0.9375rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--n-ink);
+}
+
+.n-cal__nav {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid var(--n-line);
+    background: transparent;
+    color: var(--n-ink-2);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    transition: background-color var(--n-dur-fast) var(--n-ease-out),
+                color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-cal__nav:hover { background: var(--n-accent-soft); color: var(--n-ink); }
+
+.n-cal__dow,
+.n-cal__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.n-cal__dow {
+    margin-bottom: var(--n-s1);
+}
+
+.n-cal__dow span {
+    text-align: center;
+    font-family: var(--n-font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    color: var(--n-ink-3);
+    padding-bottom: 2px;
+}
+
+.n-cal__pad { aspect-ratio: 1; }
+
+.n-cal__day {
+    aspect-ratio: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--n-ink);
+    font-family: var(--n-font-body);
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: background-color var(--n-dur-fast) var(--n-ease-out),
+                color var(--n-dur-fast) var(--n-ease-out);
+}
+
+.n-cal__day:hover:not(:disabled) { background: var(--n-accent-soft); }
+
+/* Unavailable for any reason. The strike-through carries the meaning when
+   colour alone would not, which matters for colour-blind viewers. */
+.n-cal__day.is-off {
+    color: var(--n-ink-3);
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.n-cal__day.is-booked { text-decoration: line-through; }
+
+/* The guest's own stay somewhere else — blocked, but for a different reason,
+   so it reads differently from a listing that is simply taken. */
+.n-cal__day.is-yours {
+    text-decoration: line-through;
+    color: var(--n-accent);
+    opacity: 0.7;
+}
+
+.n-cal__day.is-start,
+.n-cal__day.is-end {
+    background: var(--n-accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+.n-cal__day.is-between { background: var(--n-accent-soft); }
+
+.n-cal__hint {
+    margin: var(--n-s3) 0 0;
+    font-family: var(--n-font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    color: var(--n-ink-3);
+    min-height: 1.2em;
+}
+
+.n-cal__hint[data-tone="bad"] { color: var(--n-accent); }
+
+.n-cal__key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--n-s3);
+    margin-top: var(--n-s2);
+    font-family: var(--n-font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.06em;
+    color: var(--n-ink-3);
+}
+
+.n-cal__key span { display: inline-flex; align-items: center; gap: 4px; }
+.n-cal__key i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.n-cal__key .k-free  { background: var(--n-line-2); }
+.n-cal__key .k-taken { background: var(--n-ink-3); }
+.n-cal__key .k-yours { background: var(--n-accent); }
+
+/* Booking feedback, in place of a browser alert(). */
+.n-booking-msg {
+    margin: 0;
+    min-height: 1.3em;
+    font-family: var(--n-font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+    color: var(--n-ink-3);
+}
+
+.n-booking-msg[data-tone="bad"] { color: var(--n-accent); }

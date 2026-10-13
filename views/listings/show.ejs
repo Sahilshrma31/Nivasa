@@ -61,33 +61,46 @@
             <button class="n-btn n-btn--ghost" type="submit">Delete</button>
           </form>
         <% } else { %>
-          <%
-            // A guest who has stayed here before may book again for other
-            // dates, so a past booking is a note rather than a blocker.
-            const today = new Date().toISOString().slice(0, 10);
-          %>
           <form id="paymentForm" style="display:grid; gap:0.75rem; width:100%; max-width:26rem;">
             <% if (hasBooked) { %>
               <p class="n-label" style="color:var(--n-accent);">You have booked this Nivasa before</p>
             <% } %>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
-              <div class="n-field">
-                <label class="n-label" for="checkIn">Check in</label>
-                <input class="n-input" type="date" id="checkIn" name="checkIn"
-                       min="<%= today %>" required>
+            <div class="n-cal" id="stayCalendar" data-listing="<%= listing._id %>">
+              <div class="n-cal__head">
+                <button type="button" class="n-cal__nav" data-cal-prev
+                        aria-label="Previous month">&lsaquo;</button>
+                <span class="n-cal__month"></span>
+                <button type="button" class="n-cal__nav" data-cal-next
+                        aria-label="Next month">&rsaquo;</button>
               </div>
-              <div class="n-field">
-                <label class="n-label" for="checkOut">Check out</label>
-                <input class="n-input" type="date" id="checkOut" name="checkOut"
-                       min="<%= today %>" required>
+
+              <div class="n-cal__dow" aria-hidden="true">
+                <span>M</span><span>T</span><span>W</span><span>T</span>
+                <span>F</span><span>S</span><span>S</span>
+              </div>
+
+              <div class="n-cal__grid"></div>
+
+              <p class="n-cal__hint">Pick your check-in date.</p>
+
+              <div class="n-cal__key">
+                <span><i class="k-taken"></i>Booked</span>
+                <span><i class="k-yours"></i>Your stay elsewhere</span>
               </div>
             </div>
+
+            <!-- The calendar writes into these; the summary and the pay
+                 button read them exactly as they did with date inputs. -->
+            <input type="hidden" id="checkIn" name="checkIn">
+            <input type="hidden" id="checkOut" name="checkOut">
 
             <p class="n-body" id="stay-summary" data-price="<%= listing.price %>"
                style="margin:0; min-height:1.4em;">
               &#8377;<%= listing.price.toLocaleString("en-IN") %> per night
             </p>
+
+            <p class="n-booking-msg" id="bookingMsg" role="status"></p>
 
             <button type="button" class="n-btn" id="rzp-button">Book now</button>
           </form>
@@ -188,6 +201,40 @@
     </div>
   </section>
 
+  <!-- Stays nearby: closest first, from a $geoNear query on the 2dsphere index -->
+  <% if (nearby && nearby.length) { %>
+    <section class="n-section" data-reveal-group>
+      <div class="n-stack n-reveal">
+        <p class="n-label">Within 50 km</p>
+        <h2 class="n-display-m">Stays nearby</h2>
+      </div>
+
+      <div class="n-grid">
+        <% nearby.forEach(function (near) { %>
+          <%
+            const away = near.distanceM < 1000
+              ? "Under 1 km away"
+              : (near.distanceM / 1000).toFixed(1) + " km away";
+          %>
+          <a class="n-card n-reveal" href="/listings/<%= near._id %>">
+            <% if (near.image && near.image.url) { %>
+              <img class="n-card__media" src="<%= near.image.url %>"
+                   alt="<%= near.title %>" loading="lazy">
+            <% } %>
+            <div class="n-card__body">
+              <span class="n-card__title"><%= near.title %></span>
+              <span class="n-card__meta">
+                <%= away %>
+                &nbsp;·&nbsp;
+                &#8377;<%= near.price ? near.price.toLocaleString("en-IN") : "N/A" %>
+              </span>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
 </div>
 
 <!-- Razorpay Checkout.js -->
@@ -208,6 +255,17 @@
     button.textContent = "Book now";
   }
 
+  // A browser alert() is a system popup: it looks nothing like the page and
+  // it hides the text behind an OK click. Conflict messages name the clashing
+  // listing, so they are worth showing properly and leaving on screen.
+  const bookingMsg = document.getElementById("bookingMsg");
+
+  function say(message, tone) {
+    if (!bookingMsg) return alert(message);
+    bookingMsg.textContent = message || "";
+    bookingMsg.dataset.tone = tone || "";
+  }
+
   // Mirrors the server's arithmetic so the guest sees the same total before
   // the payment sheet opens. The server still recomputes it — this is display
   // only and is never sent.
@@ -223,7 +281,6 @@
 
     // Check-out cannot precede check-in, so keep the picker honest as soon as
     // a check-in date is chosen.
-    checkOut.min = checkIn.value;
 
     const nights = Math.round(
       (new Date(checkOut.value) - new Date(checkIn.value)) / MS_PER_NIGHT
@@ -252,7 +309,7 @@
 
       try {
         if (!checkIn.value || !checkOut.value) {
-          alert("Pick your check-in and check-out dates first.");
+          say("Pick your check-in and check-out dates first.", "bad");
           resetButton();
           return;
         }
@@ -274,7 +331,7 @@
 
         if (!res.ok) {
           // 409 means the dates went while the guest was deciding.
-          alert(order.error || "Failed to create order");
+          say(order.error || "Could not start the payment. Please try again.", "bad");
           resetButton();
           return;
         }
@@ -305,13 +362,16 @@
               if (bookingRes.ok) {
                 window.location.href = "/bookings/mine";
               } else {
-                alert(bookingData.message ||
-                  "Payment successful but booking failed. Please contact support.");
+                say(
+                  bookingData.message ||
+                    "Payment went through but the booking did not save. Please contact support.",
+                  "bad"
+                );
                 resetButton();
               }
             } catch (error) {
               console.error("Booking error:", error);
-              alert("Payment successful but booking failed. Please contact support.");
+              say("Payment went through but the booking did not save. Please contact support with your payment id.", "bad");
             }
           },
           prefill: {
@@ -332,7 +392,7 @@
 
       } catch (error) {
         console.error("Payment error:", error);
-        alert("Failed to initiate payment. Please try again.");
+        say("Could not start the payment. Please try again.", "bad");
         resetButton();
       }
     };

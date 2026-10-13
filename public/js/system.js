@@ -240,12 +240,174 @@
     });
   }
 
+  /* ---- 7. Stay calendar -------------------------------------------------- */
+
+  // Dates are handled as plain "YYYY-MM-DD" strings and built with Date.UTC.
+  // Using the local Date constructor would shift a date by a day for anyone
+  // west of UTC, which is exactly the kind of bug that silently books the
+  // wrong night.
+  const DAY_MS = 86400000;
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const parse = (s) => new Date(s + "T00:00:00Z");
+  const addDays = (d, n) => new Date(d.getTime() + n * DAY_MS);
+
+  function initStayCalendar() {
+    const root = document.getElementById("stayCalendar");
+    if (!root) return;
+
+    const checkIn = document.getElementById("checkIn");
+    const checkOut = document.getElementById("checkOut");
+    const grid = root.querySelector(".n-cal__grid");
+    const label = root.querySelector(".n-cal__month");
+    const hint = root.querySelector(".n-cal__hint");
+
+    const today = parse(iso(new Date()));
+    let view = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+
+    // Every night that cannot be selected, and why — the reason drives both
+    // the styling and the message.
+    const blocked = new Map(); // "YYYY-MM-DD" -> "booked" | "yours"
+    let start = null;
+    let end = null;
+
+    function markRange(from, to, reason) {
+      // Half-open: the checkout day is free for the next guest to arrive.
+      for (let d = parse(from); iso(d) < to; d = addDays(d, 1)) {
+        if (!blocked.has(iso(d))) blocked.set(iso(d), reason);
+      }
+    }
+
+    async function loadAvailability() {
+      try {
+        const res = await fetch(`/listings/${root.dataset.listing}/availability`);
+        if (!res.ok) return;
+        const data = await res.json();
+        (data.booked || []).forEach((r) => markRange(r.from, r.to, "booked"));
+        (data.ownStays || []).forEach((r) => markRange(r.from, r.to, "yours"));
+      } catch (e) {
+        // Calendar still works; the server re-checks everything on submit.
+        console.warn("Could not load availability", e);
+      }
+    }
+
+    // A range is only valid if every night inside it is free.
+    function rangeIsFree(from, to) {
+      for (let d = parse(from); iso(d) < to; d = addDays(d, 1)) {
+        if (blocked.has(iso(d))) return false;
+      }
+      return true;
+    }
+
+    function say(msg, tone) {
+      hint.textContent = msg || "";
+      hint.dataset.tone = tone || "";
+    }
+
+    function sync() {
+      checkIn.value = start || "";
+      checkOut.value = end || "";
+      // The summary line listens for this.
+      checkIn.dispatchEvent(new Event("change", { bubbles: true }));
+      checkOut.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function pick(day) {
+      if (!start || (start && end)) {
+        start = day;
+        end = null;
+        say("Now pick your check-out date.");
+      } else if (day <= start) {
+        // Clicking earlier restarts rather than erroring — it is almost
+        // always someone correcting their first choice.
+        start = day;
+        say("Now pick your check-out date.");
+      } else if (!rangeIsFree(start, day)) {
+        say("Those nights are not all free. Pick a shorter stay.", "bad");
+        return render();
+      } else {
+        end = day;
+        const nights = Math.round((parse(day) - parse(start)) / DAY_MS);
+        say(`${nights} night${nights === 1 ? "" : "s"} selected.`);
+      }
+      sync();
+      render();
+    }
+
+    function render() {
+      const y = view.getUTCFullYear();
+      const m = view.getUTCMonth();
+
+      label.textContent = view.toLocaleDateString("en-GB", {
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      });
+
+      // Monday-first: getUTCDay() is 0 for Sunday, so Sunday becomes 6.
+      const first = new Date(Date.UTC(y, m, 1));
+      const lead = (first.getUTCDay() + 6) % 7;
+      const days = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+
+      let html = "";
+      for (let i = 0; i < lead; i++) html += '<span class="n-cal__pad"></span>';
+
+      for (let n = 1; n <= days; n++) {
+        const d = new Date(Date.UTC(y, m, n));
+        const key = iso(d);
+        const why = blocked.get(key);
+        const past = d < today;
+        const off = past || Boolean(why);
+
+        const classes = ["n-cal__day"];
+        if (off) classes.push("is-off");
+        if (why) classes.push(why === "yours" ? "is-yours" : "is-booked");
+        if (key === start) classes.push("is-start");
+        if (key === end) classes.push("is-end");
+        if (start && end && key > start && key < end) classes.push("is-between");
+
+        const title = why === "yours"
+          ? "You are already staying somewhere this night"
+          : why === "booked"
+          ? "Already booked"
+          : "";
+
+        html += `<button type="button" class="${classes.join(" ")}" data-day="${key}"${
+          off ? " disabled" : ""
+        }${title ? ` title="${title}"` : ""}>${n}</button>`;
+      }
+
+      grid.innerHTML = html;
+    }
+
+    grid.addEventListener("click", (e) => {
+      const btn = e.target.closest(".n-cal__day");
+      if (btn && !btn.disabled) pick(btn.dataset.day);
+    });
+
+    root.querySelector("[data-cal-prev]").addEventListener("click", () => {
+      const limit = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+      if (view > limit) {
+        view = new Date(Date.UTC(view.getUTCFullYear(), view.getUTCMonth() - 1, 1));
+        render();
+      }
+    });
+
+    root.querySelector("[data-cal-next]").addEventListener("click", () => {
+      view = new Date(Date.UTC(view.getUTCFullYear(), view.getUTCMonth() + 1, 1));
+      render();
+    });
+
+    render();
+    loadAvailability().then(render);
+  }
+
   /* ---- boot -------------------------------------------------------------- */
 
   function boot() {
     initTheme();
     initNav();
     initFlash();
+    initStayCalendar();
     initReveals();
     initMattes();
     initPillbars();

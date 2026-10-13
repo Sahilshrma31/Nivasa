@@ -5,9 +5,12 @@ const Booking = require("../models/booking");
 const Listing = require("../models/listing");
 const razorpay = require("../utils/razorpay");
 const { isLoggedIn, isLoggedInApi } = require("../middleware");
-const { findOverlappingBooking } = require("../utils/availability");
 const {
-  withListingLock,
+  findOverlappingBooking,
+  findGuestOverlappingBooking,
+} = require("../utils/availability");
+const {
+  withStayLock,
   LockBusyError,
   LockUnavailableError,
 } = require("../utils/listingLock");
@@ -76,9 +79,17 @@ router.post("/", isLoggedInApi, async (req, res) => {
     // Checking availability and writing the booking has to be one indivisible
     // step. Two guests paying for the same dates at the same moment would
     // otherwise both read "free" before either had written.
-    const booking = await withListingLock(notes.listingId, async () => {
+    // Two locks: one on the listing, one on the guest. Both answers below have
+    // to stay true until the row exists, and they are different questions
+    // about different documents.
+    const outcome = await withStayLock(notes.listingId, req.user._id, async () => {
       const clash = await findOverlappingBooking(notes.listingId, checkIn, checkOut);
-      if (clash) return null;
+      if (clash) return { reason: "listing" };
+
+      const ownClash = await findGuestOverlappingBooking(req.user._id, checkIn, checkOut);
+      if (ownClash) {
+        return { reason: "guest", where: ownClash.listing && ownClash.listing.title };
+      }
 
       return Booking.create({
         user: req.user._id,
@@ -92,21 +103,25 @@ router.post("/", isLoggedInApi, async (req, res) => {
       });
     });
 
-    if (!booking) {
+    if (outcome && outcome.reason) {
       // Paid, but the dates went in the moment before. Flagged for refund
       // rather than silently kept.
       console.error("PAID BUT UNAVAILABLE — refund required", {
+        reason: outcome.reason,
         razorpayPaymentId,
         razorpayOrderId,
         user: req.user._id.toString(),
       });
-      return res.status(409).json({
-        success: false,
-        message: "Those dates were just booked by someone else. Your payment will be refunded.",
-      });
+
+      const message =
+        outcome.reason === "guest"
+          ? `You already have a stay booked${outcome.where ? ` at ${outcome.where}` : ""} over those dates. Your payment will be refunded.`
+          : "Those dates were just booked by someone else. Your payment will be refunded.";
+
+      return res.status(409).json({ success: false, message });
     }
 
-    res.status(200).json({ success: true, bookingId: booking._id });
+    res.status(200).json({ success: true, bookingId: outcome._id });
   } catch (err) {
     if (err instanceof LockBusyError) {
       return res.status(409).json({ success: false, message: err.message });

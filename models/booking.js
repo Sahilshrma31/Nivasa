@@ -36,4 +36,9 @@ bookingSchema.index({ razorpayOrderId: 1 }, { unique: true, sparse: true });
 // overlaps the requested one.
 bookingSchema.index({ listing: 1, status: 1, checkIn: 1, checkOut: 1 });
 
+// The same question asked of a guest instead of a listing: is this person
+// already staying somewhere over these dates? One guest cannot be in two
+// places at once, so an overlap at any listing blocks the booking.
+bookingSchema.index({ user: 1, status: 1, checkIn: 1, checkOut: 1 });
+
 module.exports = mongoose.model("Booking", bookingSchema);

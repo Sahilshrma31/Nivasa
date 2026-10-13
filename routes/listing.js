@@ -10,6 +10,8 @@ const mongoose = require("mongoose");
 const upload = multer({ storage: multer.memoryStorage() });
 
 const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
+const { getBookedRanges } = require("../utils/availability");
+const Booking = require("../models/booking.js");
 
 
 // Add this line at the top — after imports
@@ -81,6 +83,38 @@ router.post(
 
 
 
+
+// Dates the calendar must block out. Public, so it returns ranges only —
+// never who booked them. When the caller is signed in their own stays
+// elsewhere are included too, since they cannot be in two places at once.
+router.get("/:id/availability", wrapAsync(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid listing id" });
+  }
+
+  const booked = await getBookedRanges(id);
+
+  let ownStays = [];
+  if (req.user) {
+    const mine = await Booking.find({
+      user: req.user._id,
+      listing: { $ne: id },
+      status: { $ne: "cancelled" },
+      checkOut: { $gt: new Date() },
+    })
+      .select("checkIn checkOut -_id")
+      .lean();
+
+    ownStays = mine.map((b) => ({
+      from: b.checkIn.toISOString().slice(0, 10),
+      to: b.checkOut.toISOString().slice(0, 10),
+    }));
+  }
+
+  res.json({ booked, ownStays });
+}));
 
 // Show, update, or delete a specific listing
 router.route("/:id")

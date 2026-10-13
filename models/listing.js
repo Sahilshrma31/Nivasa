@@ -53,6 +53,11 @@ listingSchema.index({ title: "text", location: "text", country: "text" });
 // Price filtering and the two price sorts read straight off this.
 listingSchema.index({ price: 1 });
 
+// Backs the "Stays nearby" section. 2dsphere treats coordinates as points on
+// a sphere, so $geoNear can return the closest listings, with real distances
+// in metres, without scanning the whole collection.
+listingSchema.index({ geometry: "2dsphere" });
+
 listingSchema.post("findOneAndDelete", async (listing) => { // Post middleware after a listing is deleted
     if (listing) { // Only run if a listing was actually found and deleted
       await Review.deleteMany({ _id: { $in: listing.reviews } }); // Delete all reviews whose _id is in the deleted listing's reviews array

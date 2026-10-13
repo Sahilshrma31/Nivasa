@@ -8,8 +8,73 @@ const { generateSmartDescription } = require("../utils/aiDescriptionHelper");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const s3 = require("../config/s3");
 
+const mongoose = require("mongoose");
+
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
+
+// Place name -> GeoJSON point via Mapbox. A place's coordinates do not move,
+// so the answer is cached for a day. Returns null when Mapbox finds nothing.
+async function geocodeLocation(location) {
+  const GEO_CACHE_KEY = `geo:${location.toLowerCase()}`;
+  let geoData = null;
+
+  if (redis) {
+    try {
+      const cachedGeo = await redis.get(GEO_CACHE_KEY);
+      if (cachedGeo) geoData = JSON.parse(cachedGeo);
+    } catch (err) {
+      console.log("Redis geo cache read failed");
+    }
+  }
+
+  if (!geoData) {
+    const geoResponse = await geocodingClient
+      .forwardGeocode({ query: location, limit: 1 })
+      .send();
+
+    geoData = geoResponse.body.features[0];
+    if (!geoData) return null;
+
+    if (redis) {
+      try {
+        await redis.set(GEO_CACHE_KEY, JSON.stringify(geoData), "EX", 86400);
+      } catch (err) {
+        console.log("Redis geo cache write skipped");
+      }
+    }
+  }
+
+  return geoData.geometry;
+}
+
+/* Stays nearby */
+const NEARBY_RADIUS_M = 50 * 1000; // 50 km
+const NEARBY_LIMIT = 4;
+
+// $geoNear walks the 2dsphere index outward from this listing's point, so
+// results come back closest first with the distance attached (distanceM, in
+// metres). It must be the first stage of the pipeline, and aggregate() does
+// not cast ids, hence the explicit ObjectId for excluding this listing.
+async function findNearbyListings(listing) {
+  const coords = listing.geometry && listing.geometry.coordinates;
+  if (!coords || coords.length !== 2) return [];
+
+  return Listing.aggregate([
+    {
+      $geoNear: {
+        near: { type: "Point", coordinates: coords },
+        key: "geometry",
+        distanceField: "distanceM",
+        maxDistance: NEARBY_RADIUS_M,
+        spherical: true,
+        query: { _id: { $ne: new mongoose.Types.ObjectId(String(listing._id)) } },
+      },
+    },
+    { $limit: NEARBY_LIMIT },
+    { $project: { title: 1, image: 1, location: 1, price: 1, distanceM: 1 } },
+  ]);
+}
 
 /* Show all listings */
 const PAGE_SIZE = 12;
@@ -166,43 +231,16 @@ module.exports.createListing = async (req, res) => {
       };
     }
 
-    const location = listingData.location;
-    const GEO_CACHE_KEY = `geo:${location.toLowerCase()}`;
-    let geoData = null;
+    const geometry = await geocodeLocation(listingData.location);
 
-    if (redis) {
-      try {
-        const cachedGeo = await redis.get(GEO_CACHE_KEY);
-        if (cachedGeo) geoData = JSON.parse(cachedGeo);
-      } catch (err) {
-        console.log("Redis geo cache read failed");
-      }
-    }
-
-    if (!geoData) {
-      const geoResponse = await geocodingClient
-        .forwardGeocode({ query: location, limit: 1 })
-        .send();
-
-      geoData = geoResponse.body.features[0];
-
-      if (!geoData) {
-        req.flash("error", "Invalid location.");
-        return res.redirect("/listings/new");
-      }
-
-      if (redis) {
-        try {
-          await redis.set(GEO_CACHE_KEY, JSON.stringify(geoData), "EX", 86400);
-        } catch (err) {
-          console.log("Redis geo cache write skipped");
-        }
-      }
+    if (!geometry) {
+      req.flash("error", "Invalid location.");
+      return res.redirect("/listings/new");
     }
 
     const newListing = new Listing(listingData);
     newListing.owner = req.user._id;
-    newListing.geometry = geoData.geometry;
+    newListing.geometry = geometry;
 
     await newListing.save();
 
@@ -272,11 +310,21 @@ module.exports.showListing = async (req, res) => {
       listing.owner &&
       currUser._id.toString() === listing.owner._id.toString();
 
+    // Extra content, so a failure here (say the index has not finished
+    // building yet) leaves the section empty instead of breaking the page.
+    let nearby = [];
+    try {
+      nearby = await findNearbyListings(listing);
+    } catch (err) {
+      console.error("Nearby listings query failed:", err.message);
+    }
+
     res.render("listings/show", {
       listing,
       currUser,
       isOwner,
       hasBooked,
+      nearby,
       razorpayKeyId: process.env.RAZORPAY_KEY_ID
     });
 
@@ -312,6 +360,20 @@ module.exports.updateListing = async (req, res) => {
       url: imageUrl,
       filename: key
     };
+  }
+
+  // A new location needs new coordinates. Without this the map pin and the
+  // "Stays nearby" results kept pointing at the old place after an edit.
+  const existing = await Listing.findById(id).select("location");
+  if (existing && listingData.location && listingData.location !== existing.location) {
+    const geometry = await geocodeLocation(listingData.location);
+
+    if (!geometry) {
+      req.flash("error", "Invalid location.");
+      return res.redirect(`/listings/${id}/edit`);
+    }
+
+    listingData.geometry = geometry;
   }
 
   await Listing.findByIdAndUpdate(id, listingData);
